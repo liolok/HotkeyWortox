@@ -147,23 +147,48 @@ fn.BlinkInPlace = function()
   return SendRPCToServer(RPC.RightClick, ACTIONS.BLINK.code, pos.x, pos.z)
 end
 
+fn.GetCursorPosition = function()
+  if not (TheInput and ThePlayer) then return end
+  if ThePlayer.AnimState:IsCurrentAnimation('wortox_portal_jumpin') then return end
+  if ThePlayer.AnimState:IsCurrentAnimation('wortox_portal_jumpout') then return end
+
+  local target = TheInput:GetWorldEntityUnderMouse()
+  local cursor = target and target:GetPosition() or TheInput:GetWorldPosition()
+  local player = ThePlayer:GetPosition()
+  local dx, dz = cursor.x - player.x, cursor.z - player.z
+  local distance = math.sqrt(dx ^ 2 + dz ^ 2)
+  local dist_max = ACTIONS.BLINK.distance or 36
+  if distance < dist_max then return cursor.x, cursor.z end
+end
+
 fn.BlinkToCursor = function()
   if not IsPlaying('wortox') then return end
 
-  local target = TheInput:GetWorldEntityUnderMouse()
-  local pos = target and target:GetPosition() or TheInput:GetWorldPosition()
-  return SendRPCToServer(RPC.RightClick, ACTIONS.BLINK.code, pos.x, pos.z)
+  local x, z = fn.GetCursorPosition()
+  return (x and z) and SendRPCToServer(RPC.RightClick, ACTIONS.BLINK.code, pos.x, pos.z)
+end
+
+fn.GetMostFarPosition = function()
+  if not (TheInput and ThePlayer) then return end
+  if ThePlayer.AnimState:IsCurrentAnimation('wortox_portal_jumpin') then return end
+  if ThePlayer.AnimState:IsCurrentAnimation('wortox_portal_jumpout') then return end
+
+  local cursor, player = TheInput:GetWorldPosition(), ThePlayer:GetPosition()
+  local dx, dz = cursor.x - player.x, cursor.z - player.z
+  local distance = math.sqrt(dx ^ 2 + dz ^ 2)
+  local dist_max = ACTIONS.BLINK.distance or 36
+  if distance < dist_max / 9 then return end -- dead zone
+
+  local x = player.x + dist_max * dx / distance
+  local z = player.z + dist_max * dz / distance
+  return x, z
 end
 
 fn.BlinkToMostFar = function()
   if not IsPlaying('wortox') then return end
 
-  local cursor, player = TheInput:GetWorldPosition(), ThePlayer:GetPosition()
-  local dx, dz = cursor.x - player.x, cursor.z - player.z
-  local distance = math.sqrt(dx ^ 2 + dz ^ 2)
-  local x = player.x + (ACTIONS.BLINK.distance or 36) * dx / distance
-  local z = player.z + (ACTIONS.BLINK.distance or 36) * dz / distance
-  return SendRPCToServer(RPC.RightClick, ACTIONS.BLINK.code, x, z)
+  local x, z = fn.GetMostFarPosition()
+  return (x and z) and SendRPCToServer(RPC.RightClick, ACTIONS.BLINK.code, x, z)
 end
 
 --------------------------------------------------------------------------------
