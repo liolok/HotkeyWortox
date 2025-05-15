@@ -1,0 +1,14 @@
+[h2]Feature[/h2]
+[list]
+[*]Eat Soul
+[*]Release Soul
+[*]Store or Take Soul: Store into / take from Soul Jar, try to adjust the inventory bar Soul number to "ten short of overload limit"
+[/list]
+
+[h2]Credits[/h2]
+
+Soul Jar: [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3379520334]this mod of liang[/url]
+
+[hr][/hr]
+
+[url=https://github.com/liolok/HotkeyWortox]Source Code[/url]

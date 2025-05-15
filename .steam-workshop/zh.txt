@@ -1,0 +1,14 @@
+[h2]功能[/h2]
+[list]
+[*]吃灵魂
+[*]释放灵魂
+[*]存放或拿取灵魂：存/取灵魂罐，尽量将物品栏灵魂数量调节为「差十个达到过载上限」。
+[/list]
+
+[h2]致谢[/h2]
+
+灵魂罐：[url=https://steamcommunity.com/sharedfiles/filedetails/?id=3379520334]liang 的这个模组[/url]
+
+[hr][/hr]
+
+[url=https://github.com/liolok/HotkeyWortox]源码[/url]
