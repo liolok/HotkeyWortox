@@ -24,7 +24,7 @@ end
 
 local function FindInvItem(prefab)
   local inventory = Inv()
-  local slot = i, inventory:GetNumSlots() do
+  for slot = 1, inventory:GetNumSlots() do
     local item = inventory:GetItemInSlot(slot)
     if item and item.prefab == prefab then return item end
   end
