@@ -2,12 +2,17 @@
 [list]
 [*]Eat Soul
 [*]Release Soul
-[*]Store or Take Soul: Store into / take from Soul Jar, try to adjust the inventory bar Soul number to "ten short of overload limit"
+[*]Store or Take Soul: Store into / take from Soul Jar, try to adjust the inventory bar Soul number to "ten short of overload limit".
+[*]Soul Hop in Place
+[*]Soul Hop to Cursor: Try to jump to the position of mouse cursor.
+[*]Soul Hop to Most Far: Try to jump to the furthest position directed by the mouse cursor.
 [/list]
 
 [h2]Credits[/h2]
-
-Soul Jar: [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3379520334]this mod of liang[/url]
+[list]
+[*]Soul Jar: [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3379520334]this mod of liang[/url]
+[*]Soul Hop: [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3129154416]this mod of 萌萌的新[/url]
+[/list]
 
 [hr][/hr]
 

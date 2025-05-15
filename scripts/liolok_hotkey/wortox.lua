@@ -30,6 +30,8 @@ local function FindInvItem(prefab)
   end
 end
 
+--------------------------------------------------------------------------------
+
 fn.UseSoul = function()
   if not IsPlaying('wortox') then return end
   local soul = FindInvItem('wortox_soul')
@@ -43,8 +45,9 @@ fn.DropSoul = function()
 end
 
 --------------------------------------------------------------------------------
+-- credit: workshop-3379520334 of liang
 
-local function StoreSoul(jar_item, soul_slot, soul_num) -- credit: workshop-3379520334 of liang
+local function StoreSoul(jar_item, soul_slot, soul_num)
   if not (jar_item and soul_slot and soul_num) then return end
   SendRPCToServer(RPC.TakeActiveItemFromCountOfSlot, soul_slot, nil, soul_num) -- take souls from slot
   SendRPCToServer(RPC.UseItemFromInvTile, ACTIONS.STORE.code, jar_item) -- store as many souls into jar
@@ -53,7 +56,7 @@ local function StoreSoul(jar_item, soul_slot, soul_num) -- credit: workshop-3379
   end)
 end
 
-local function TakeSoul(jar_item, soul_slot, soul_num, is_slot_empty) -- credit: workshop-3379520334 of liang
+local function TakeSoul(jar_item, soul_slot, soul_num, is_slot_empty)
   if not (jar_item and soul_slot and soul_num) then return end
   SendRPCToServer(RPC.UseItemFromInvTile, ACTIONS.RUMMAGE.code, jar_item) -- open jar
   return ThePlayer:DoTaskInTime(0.4, function() -- wait to ensure jar is ready
@@ -63,6 +66,8 @@ local function TakeSoul(jar_item, soul_slot, soul_num, is_slot_empty) -- credit:
     SendRPCToServer(RPC.UseItemFromInvTile, ACTIONS.RUMMAGE.code, jar_item) -- close jar
   end)
 end
+
+--------------------------------------------------------------------------------
 
 local is_jar_in_cd -- cooldown for Soul Jar usage
 
@@ -130,6 +135,35 @@ fn.UseSoulJar = function()
     end
   end
   return TakeSoul(jar.max.item, soul.slot, num, true)
+end
+
+--------------------------------------------------------------------------------
+-- credits: workshop-3129154416 of 萌萌的新
+
+fn.BlinkInPlace = function()
+  if not IsPlaying('wortox') then return end
+
+  local pos = ThePlayer:GetPosition()
+  return SendRPCToServer(RPC.RightClick, ACTIONS.BLINK.code, pos.x, pos.z)
+end
+
+fn.BlinkToCursor = function()
+  if not IsPlaying('wortox') then return end
+
+  local target = TheInput:GetWorldEntityUnderMouse()
+  local pos = target and target:GetPosition() or TheInput:GetWorldPosition()
+  return SendRPCToServer(RPC.RightClick, ACTIONS.BLINK.code, pos.x, pos.z)
+end
+
+fn.BlinkToMostFar = function()
+  if not IsPlaying('wortox') then return end
+
+  local cursor, player = TheInput:GetWorldPosition(), ThePlayer:GetPosition()
+  local dx, dz = cursor.x - player.x, cursor.z - player.z
+  local distance = math.sqrt(dx ^ 2 + dz ^ 2)
+  local x = player.x + (ACTIONS.BLINK.distance or 36) * dx / distance
+  local z = player.z + (ACTIONS.BLINK.distance or 36) * dz / distance
+  return SendRPCToServer(RPC.RightClick, ACTIONS.BLINK.code, x, z)
 end
 
 --------------------------------------------------------------------------------

@@ -62,3 +62,17 @@ Config(
     '存/取灵魂罐，尽量将物品栏灵魂数量调节为「差十个达到过载上限」。'
   )
 )
+Config('BlinkInPlace', T('Soul Hop in Place', '原地灵魂跳跃'))
+Config(
+  'BlinkToCursor',
+  T('Soul Hop to Cursor', '精准灵魂跳跃'),
+  T('Try to jump to the position of mouse cursor.', '尝试跳到鼠标光标所在位置')
+)
+Config(
+  'BlinkToMostFar',
+  T('Soul Hop to Most Far', '最远灵魂跳跃'),
+  T(
+    'Try to jump to the furthest position directed by the mouse cursor.',
+    '尝试跳到鼠标光标所指向的最远位置'
+  )
+)
