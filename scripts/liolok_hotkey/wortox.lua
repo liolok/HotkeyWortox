@@ -165,7 +165,7 @@ fn.BlinkToCursor = function()
   if not IsPlaying('wortox') then return end
 
   local x, z = fn.GetCursorPosition()
-  return (x and z) and SendRPCToServer(RPC.RightClick, ACTIONS.BLINK.code, pos.x, pos.z)
+  return (x and z) and SendRPCToServer(RPC.RightClick, ACTIONS.BLINK.code, x, z)
 end
 
 fn.GetMostFarPosition = function()
