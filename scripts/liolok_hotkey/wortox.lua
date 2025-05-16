@@ -24,6 +24,9 @@ end
 
 fn.IsPlaying = IsPlaying
 
+--------------------------------------------------------------------------------
+-- wortox_soul | Soul | 灵魂
+
 local function FindInvItem(prefab)
   local inventory = Inv()
   for slot = 1, inventory:GetNumSlots() do
@@ -31,22 +34,6 @@ local function FindInvItem(prefab)
     if item and item.prefab == prefab then return item end
   end
 end
-
-local function IsJumping()
-  local as = Get(ThePlayer, 'AnimState')
-  return as and (as:IsCurrentAnimation('wortox_portal_jumpin') or as:IsCurrentAnimation('wortox_portal_jumpout'))
-end
-
-local function GetFirstEmptySlot()
-  local inventory = Inv()
-  if not inventory then return end
-  for slot = 1, inventory:GetNumSlots() do
-    if not inventory:GetItemInSlot(slot) then return slot end
-  end
-end
-
---------------------------------------------------------------------------------
--- wortox_soul | Soul | 灵魂
 
 fn.UseSoul = function()
   local soul = FindInvItem('wortox_soul')
@@ -72,20 +59,34 @@ local function StoreSoul(jar_item, soul_slot, soul_num)
   end)
 end
 
-local function TakeSoul(jar_item, soul_slot, soul_num, is_slot_empty)
+local function ToggleJar(jar) return SendRPCToServer(RPC.UseItemFromInvTile, ACTIONS.RUMMAGE.code, jar) end
+
+local function GetFirstEmptySlot()
+  local inventory = Inv()
+  if not inventory then return end
+  for slot = 1, inventory:GetNumSlots() do
+    if not inventory:GetItemInSlot(slot) then return slot end
+  end
+end
+
+local function TakeSoul(jar_item, soul_slot, soul_num)
   if not jar_item then return end
 
-  if not Get(jar_item, 'replica', 'container', '_isopen') then -- open jar if not already open
-    SendRPCToServer(RPC.UseItemFromInvTile, ACTIONS.RUMMAGE.code, jar_item)
-  end
-  return ThePlayer:DoTaskInTime(0.4, function() -- wait to ensure jar is ready
-    if soul_slot and soul_num > 0 then
+  local is_open = Get(jar_item, 'replica', 'container', '_isopen')
+  if not is_open then ToggleJar(jar_item) end -- open jar if not already open
+  return ThePlayer:DoTaskInTime(is_open and 0 or 0.4, function() -- wait to ensure jar is ready
+    if soul_num > 0 then
       SendRPCToServer(RPC.TakeActiveItemFromCountOfSlot, 1, jar_item, soul_num) -- take souls from jar
-      local rpc = is_slot_empty and RPC.PutAllOfActiveItemInSlot or RPC.AddAllOfActiveItemToSlot
-      SendRPCToServer(rpc, soul_slot) -- put soul into inventory bar slot
+      local rpc = soul_slot and RPC.AddAllOfActiveItemToSlot or RPC.PutAllOfActiveItemInSlot
+      SendRPCToServer(rpc, soul_slot or GetFirstEmptySlot()) -- put soul into inventory bar slot
     end
-    return SendRPCToServer(RPC.UseItemFromInvTile, ACTIONS.RUMMAGE.code, jar_item) -- close jar
+    return ToggleJar(jar_item) -- close jar
   end)
+end
+
+local function IsJumping()
+  local as = Get(ThePlayer, 'AnimState')
+  return as and (as:IsCurrentAnimation('wortox_portal_jumpin') or as:IsCurrentAnimation('wortox_portal_jumpout'))
 end
 
 local is_jar_in_cd -- cooldown for Soul Jar usage
@@ -147,7 +148,7 @@ fn.UseSoulJar = function()
   if soul.total > target_count then -- inventory bar soul too many
     return jar.min.percent < 100 and StoreSoul(jar.min.item, soul.slot, num) -- emptiest jar not full, store into it.
   else -- inventory soul too few, try to take some out of fullest jar
-    return TakeSoul(jar.max.item, soul.slot or GetFirstEmptySlot(), num, soul.total == 0)
+    return TakeSoul(jar.max.item, soul.slot, num)
   end
 end
 
@@ -160,41 +161,37 @@ fn.BlinkInPlace = function()
   return pos and SendRPCToServer(RPC.RightClick, ACTIONS.BLINK.code, pos.x, pos.z)
 end
 
-fn.GetCursorPosition = function()
-  if IsJumping() or not (TheInput and ThePlayer) then return end
+local function IsRiding()
+  local rider = Get(ThePlayer, 'replica', 'rider')
+  return rider and rider:IsRiding()
+end
 
-  local target = TheInput:GetWorldEntityUnderMouse()
-  local cursor = target and target:GetPosition() or TheInput:GetWorldPosition()
+local function GetTargetPosition(target)
+  if IsJumping() or IsRiding() or not (TheInput and ThePlayer) then return end
+
+  local entity = TheInput:GetWorldEntityUnderMouse()
+  local cursor = target == 'Cursor' and (entity and entity:GetPosition()) or TheInput:GetWorldPosition()
   local player = ThePlayer:GetPosition()
   local dx, dz = cursor.x - player.x, cursor.z - player.z
   local distance = math.sqrt(dx ^ 2 + dz ^ 2)
   local dist_max = ACTIONS.BLINK.distance or 36
-  if distance < dist_max then return cursor.x, cursor.z end
+
+  if target == 'Cursor' and distance <= dist_max then
+    return cursor.x, cursor.z
+  elseif target == 'Most Far' and distance > dist_max / 9 then -- dead zone
+    return player.x + dist_max * dx / distance, player.z + dist_max * dz / distance
+  end
 end
 
-fn.BlinkToCursor = function()
-  local x, z = fn.GetCursorPosition()
+fn.GetBlinkTargetPosition = GetTargetPosition
+
+local function BlinkTo(target)
+  local x, z = GetTargetPosition(target)
   return (x and z) and SendRPCToServer(RPC.RightClick, ACTIONS.BLINK.code, x, z)
 end
 
-fn.GetMostFarPosition = function()
-  if IsJumping() or not (TheInput and ThePlayer) then return end
-
-  local cursor, player = TheInput:GetWorldPosition(), ThePlayer:GetPosition()
-  local dx, dz = cursor.x - player.x, cursor.z - player.z
-  local distance = math.sqrt(dx ^ 2 + dz ^ 2)
-  local dist_max = ACTIONS.BLINK.distance or 36
-  if distance < dist_max / 9 then return end -- dead zone
-
-  local x = player.x + dist_max * dx / distance
-  local z = player.z + dist_max * dz / distance
-  return x, z
-end
-
-fn.BlinkToMostFar = function()
-  local x, z = fn.GetMostFarPosition()
-  return (x and z) and SendRPCToServer(RPC.RightClick, ACTIONS.BLINK.code, x, z)
-end
+fn.BlinkToCursor = function() return BlinkTo('Cursor') end
+fn.BlinkToMostFar = function() return BlinkTo('Most Far') end
 
 --------------------------------------------------------------------------------
 

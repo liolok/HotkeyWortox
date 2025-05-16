@@ -36,7 +36,7 @@ AddComponentPostInit('playercontroller', function(self)
 
     if TUNING.HOTKEY_WORTOX_CURSOR then -- key binding enabled
       self.blink_marker_cursor = self.blink_marker_cursor or G.SpawnPrefab('blink_marker')
-      local x, z = fn.GetCursorPosition()
+      local x, z = fn.GetBlinkTargetPosition('Cursor')
       self.blink_marker_cursor:Refresh(x, z)
     elseif self.blink_marker_cursor then -- key binding disabled in game
       self.blink_marker_cursor:Remove()
@@ -45,7 +45,7 @@ AddComponentPostInit('playercontroller', function(self)
 
     if TUNING.HOTKEY_WORTOX_MOST_FAR then -- key binding enabled
       self.blink_marker_most_far = self.blink_marker_most_far or G.SpawnPrefab('blink_marker')
-      local x, z = fn.GetMostFarPosition()
+      local x, z = fn.GetBlinkTargetPosition('Most Far')
       self.blink_marker_most_far:Refresh(x, z)
     elseif self.blink_marker_most_far then -- key binding disabled in game
       self.blink_marker_most_far:Remove()
