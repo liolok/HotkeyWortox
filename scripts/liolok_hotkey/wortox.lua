@@ -112,6 +112,7 @@ fn.UseSoulJar = function()
   local max_count = Get(TUNING, 'WORTOX_MAX_SOULS') or 20 -- overload limit
   local per_count = Get(TUNING, 'SKILLS', 'WORTOX', 'FILLED_SOULJAR_SOULCAP_INCREASE_PER') or 5
   if skill:IsActivated('wortox_souljar_2') then max_count = max_count + per_count * jar.total end
+  local target_count = math.min(max_count - 10, 40)
   local target_count = max_count - 10
   local num = math.abs(target_count - soul.total) -- number of souls to move
   if num == 0 then return end -- no need to move
