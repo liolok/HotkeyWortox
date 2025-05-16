@@ -1,9 +1,7 @@
 PrefabFiles = { 'blink_marker' }
-
 modimport('keybind')
-
-local callback = require('liolok_hotkey/wortox')
-
+local G = GLOBAL
+local fn = require('liolok_hotkey/wortox')
 local handler = {} -- config name to key event handlers
 
 function KeyBind(name, key)
@@ -22,22 +20,23 @@ function KeyBind(name, key)
 
   -- new binding
   if key >= 1000 then -- it's a mouse button
-    handler[name] = GLOBAL.TheInput:AddMouseButtonHandler(function(button, down, x, y)
-      if button == key and down then callback[name]() end
-    end)
+    handler[name] = G.TheInput:AddMouseButtonHandler(
+      function(button, down) return (button == key and down and fn.IsPlaying('wortox')) and fn[name]() end
+    )
   else -- it's a keyboard key
-    handler[name] = GLOBAL.TheInput:AddKeyDownHandler(key, callback[name])
+    handler[name] = G.TheInput:AddKeyDownHandler(key, function() return fn.IsPlaying('wortox') and fn[name]() end)
   end
 end
 
-AddComponentPostInit('playercontroller', function(self) -- injection
+-- Soul Hop Target Position Display | 灵魂跳跃目标位置显示
+AddComponentPostInit('playercontroller', function(self)
   local OldOnUpdate = self.OnUpdate
   self.OnUpdate = function(self, ...)
-    if not (GLOBAL.ThePlayer and GLOBAL.ThePlayer.prefab == 'wortox') then return OldOnUpdate(self, ...) end
+    if not (G.ThePlayer and G.ThePlayer.prefab == 'wortox') then return OldOnUpdate(self, ...) end
 
     if TUNING.HOTKEY_WORTOX_CURSOR then -- key binding enabled
-      self.blink_marker_cursor = self.blink_marker_cursor or GLOBAL.SpawnPrefab('blink_marker')
-      local x, z = callback.GetCursorPosition()
+      self.blink_marker_cursor = self.blink_marker_cursor or G.SpawnPrefab('blink_marker')
+      local x, z = fn.GetCursorPosition()
       self.blink_marker_cursor:Refresh(x, z)
     elseif self.blink_marker_cursor then -- key binding disabled in game
       self.blink_marker_cursor:Remove()
@@ -45,8 +44,8 @@ AddComponentPostInit('playercontroller', function(self) -- injection
     end
 
     if TUNING.HOTKEY_WORTOX_MOST_FAR then -- key binding enabled
-      self.blink_marker_most_far = self.blink_marker_most_far or GLOBAL.SpawnPrefab('blink_marker')
-      local x, z = callback.GetMostFarPosition()
+      self.blink_marker_most_far = self.blink_marker_most_far or G.SpawnPrefab('blink_marker')
+      local x, z = fn.GetMostFarPosition()
       self.blink_marker_most_far:Refresh(x, z)
     elseif self.blink_marker_most_far then -- key binding disabled in game
       self.blink_marker_most_far:Remove()
