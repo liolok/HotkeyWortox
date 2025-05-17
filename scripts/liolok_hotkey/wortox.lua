@@ -156,18 +156,25 @@ end
 -- blink | Soul Hop | 灵魂跳跃
 -- credits: workshop-3129154416 of 萌萌的新
 
-fn.BlinkInPlace = function()
-  local pos = ThePlayer:GetPosition()
-  return pos and SendRPCToServer(RPC.RightClick, ACTIONS.BLINK.code, pos.x, pos.z)
-end
+local function CanBlink()
+  if Get(ThePlayer, 'CanSoulhop') and not ThePlayer:CanSoulhop() then return end -- no inventory soul or riding
 
-local function IsRiding()
-  local rider = Get(ThePlayer, 'replica', 'rider')
-  return rider and rider:IsRiding()
+  if IsJumping() then return end
+
+  local inventory = Inv()
+  if not inventory or inventory:GetActiveItem() then return end -- something is on mouse cursor
+
+  local hand_item = inventory:GetEquippedItem(EQUIPSLOTS.HANDS)
+  if hand_item and hand_item.prefab == 'orangestaff' then return end -- The Lazy Explorer is equipped
+
+  return true
 end
 
 local function GetTargetPosition(target)
-  if IsJumping() or IsRiding() or not (TheInput and ThePlayer) then return end
+  if not (ThePlayer and TheInput and TheWorld and TheWorld.Map and CanBlink()) then return end
+
+  local player = ThePlayer:GetPosition()
+  if target == 'Player' then return player.x, player.z end
 
   if target == 'Entity' then
     local entity = TheInput:GetWorldEntityUnderMouse()
@@ -178,12 +185,16 @@ local function GetTargetPosition(target)
   end
 
   local cursor = TheInput:GetWorldPosition()
-  local player = ThePlayer:GetPosition()
   local dx, dz = cursor.x - player.x, cursor.z - player.z
-  local distance = math.sqrt(dx ^ 2 + dz ^ 2)
+  local distance = math.sqrt(dx ^ 2 + dz ^ 2) -- distance between player and cursor
   local dist_max = ACTIONS.BLINK.distance or 36
   if distance < dist_max / 9 then return end -- dead zone
-  return player.x + dist_max * dx / distance, player.z + dist_max * dz / distance
+
+  for dist = dist_max, dist_max / 3, -0.1 do
+    local ratio = dist / distance
+    local x, z = player.x + dx * ratio, player.z + dz * ratio
+    if TheWorld.Map:IsPassableAtPoint(x, 0, z) then return x, z end
+  end
 end
 
 fn.GetBlinkTargetPosition = GetTargetPosition
@@ -193,6 +204,7 @@ local function BlinkTo(target)
   return (x and z) and SendRPCToServer(RPC.RightClick, ACTIONS.BLINK.code, x, z)
 end
 
+fn.BlinkInPlace = function() return BlinkTo('Player') end
 fn.BlinkToEntity = function() return BlinkTo('Entity') end
 fn.BlinkToMostFar = function() return BlinkTo('Most Far') end
 
