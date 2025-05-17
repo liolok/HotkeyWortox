@@ -193,7 +193,7 @@ local function BlinkTo(target)
   return (x and z) and SendRPCToServer(RPC.RightClick, ACTIONS.BLINK.code, x, z)
 end
 
-fn.BlinkToCursor = function() return BlinkTo('Entity') end
+fn.BlinkToEntity = function() return BlinkTo('Entity') end
 fn.BlinkToMostFar = function() return BlinkTo('Most Far') end
 
 --------------------------------------------------------------------------------

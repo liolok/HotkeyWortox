@@ -12,7 +12,7 @@ function KeyBind(name, key)
   end
 
   -- if has binding, will display its blink marker
-  if name == 'BlinkToCursor' then TUNING.HOTKEY_WORTOX_CURSOR = key ~= nil end
+  if name == 'BlinkToEntity' then TUNING.HOTKEY_WORTOX_CURSOR = key ~= nil end
   if name == 'BlinkToMostFar' then TUNING.HOTKEY_WORTOX_MOST_FAR = key ~= nil end
 
   -- no binding
