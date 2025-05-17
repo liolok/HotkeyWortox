@@ -69,12 +69,15 @@ local function GetFirstEmptySlot()
   end
 end
 
+local is_jar_in_cd -- cooldown for Soul Jar Open/Close
+
 local function TakeSoul(jar_item, soul_slot, soul_num)
   if not jar_item then return end
 
+  is_jar_in_cd = ThePlayer:DoTaskInTime(1, function() is_jar_in_cd = nil end)
   local is_open = Get(jar_item, 'replica', 'container', '_isopen')
   if not is_open then ToggleJar(jar_item) end -- open jar if not already open
-  return ThePlayer:DoTaskInTime(is_open and 0 or 0.4, function() -- wait to ensure jar is ready
+  return ThePlayer:DoTaskInTime(is_open and 0 or 0.4, function() -- wait to ensure jar is open
     if soul_num > 0 then
       SendRPCToServer(RPC.TakeActiveItemFromCountOfSlot, 1, jar_item, soul_num) -- take souls from jar
       local rpc = soul_slot and RPC.AddAllOfActiveItemToSlot or RPC.PutAllOfActiveItemInSlot
@@ -89,21 +92,18 @@ local function IsJumping()
   return as and (as:IsCurrentAnimation('wortox_portal_jumpin') or as:IsCurrentAnimation('wortox_portal_jumpout'))
 end
 
-local is_jar_in_cd -- cooldown for Soul Jar usage
 local task_delay
 
 fn.UseSoulJar = function()
   if is_jar_in_cd then return end
 
   if IsJumping() then
-    task_delay = task_delay or ThePlayer:DoPeriodicTask(3 * FRAMES, fn.UseSoulJar)
+    task_delay = task_delay or ThePlayer:DoPeriodicTask(FRAMES, fn.UseSoulJar)
     return
   elseif task_delay then
     task_delay:Cancel()
     task_delay = nil
   end
-
-  is_jar_in_cd = ThePlayer:DoTaskInTime(1, function() is_jar_in_cd = nil end)
 
   local skill = Get(ThePlayer, 'components', 'skilltreeupdater')
   if not (skill and skill:IsActivated('wortox_souljar_1')) then return end -- can not use jar at all
@@ -170,7 +170,7 @@ local function GetTargetPosition(target)
   if IsJumping() or IsRiding() or not (TheInput and ThePlayer) then return end
 
   if target == 'Entity' then
-  local entity = TheInput:GetWorldEntityUnderMouse()
+    local entity = TheInput:GetWorldEntityUnderMouse()
     if not entity or entity:HasTag('CLASSIFIED') then return end
 
     local pos = entity:GetPosition()
@@ -183,7 +183,7 @@ local function GetTargetPosition(target)
   local distance = math.sqrt(dx ^ 2 + dz ^ 2)
   local dist_max = ACTIONS.BLINK.distance or 36
   if distance < dist_max / 9 then return end -- dead zone
-    return player.x + dist_max * dx / distance, player.z + dist_max * dz / distance
+  return player.x + dist_max * dx / distance, player.z + dist_max * dz / distance
 end
 
 fn.GetBlinkTargetPosition = GetTargetPosition
