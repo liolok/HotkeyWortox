@@ -72,13 +72,10 @@ Config(
 Config(
   'BlinkToEntity',
   T('Soul Hop to Object', '精准灵魂跳跃'),
-  T('Try to jump to the position of object under mouse cursor.', '尝试跳到鼠标光标下方物体的所在位置')
+  T('Jump to the position of object under mouse cursor.', '跳到鼠标光标下物体所在的位置')
 )
 Config(
   'BlinkToMostFar',
   T('Soul Hop to Furthest', '最远灵魂跳跃'),
-  T(
-    'Try to jump to the furthest position directed by the mouse cursor.',
-    '尝试跳到鼠标光标所指向的最远位置'
-  )
+  T('Jump to the furthest position directed by the mouse cursor.', '跳到鼠标光标所指向的最远位置')
 )
