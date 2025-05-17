@@ -36,7 +36,7 @@ AddComponentPostInit('playercontroller', function(self)
 
     if TUNING.HOTKEY_WORTOX_CURSOR then -- key binding enabled
       self.blink_marker_cursor = self.blink_marker_cursor or G.SpawnPrefab('blink_marker')
-      local x, z = fn.GetBlinkTargetPosition('Cursor')
+      local x, z = fn.GetBlinkTargetPosition('Entity')
       self.blink_marker_cursor:Refresh(x, z)
     elseif self.blink_marker_cursor then -- key binding disabled in game
       self.blink_marker_cursor:Remove()

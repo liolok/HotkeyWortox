@@ -169,18 +169,21 @@ end
 local function GetTargetPosition(target)
   if IsJumping() or IsRiding() or not (TheInput and ThePlayer) then return end
 
+  if target == 'Entity' then
   local entity = TheInput:GetWorldEntityUnderMouse()
-  local cursor = target == 'Cursor' and (entity and entity:GetPosition()) or TheInput:GetWorldPosition()
+    if not entity or entity:HasTag('CLASSIFIED') then return end
+
+    local pos = entity:GetPosition()
+    return pos.x, pos.z
+  end
+
+  local cursor = TheInput:GetWorldPosition()
   local player = ThePlayer:GetPosition()
   local dx, dz = cursor.x - player.x, cursor.z - player.z
   local distance = math.sqrt(dx ^ 2 + dz ^ 2)
   local dist_max = ACTIONS.BLINK.distance or 36
-
-  if target == 'Cursor' and distance <= dist_max then
-    return cursor.x, cursor.z
-  elseif target == 'Most Far' and distance > dist_max / 9 then -- dead zone
+  if distance < dist_max / 9 then return end -- dead zone
     return player.x + dist_max * dx / distance, player.z + dist_max * dz / distance
-  end
 end
 
 fn.GetBlinkTargetPosition = GetTargetPosition
@@ -190,7 +193,7 @@ local function BlinkTo(target)
   return (x and z) and SendRPCToServer(RPC.RightClick, ACTIONS.BLINK.code, x, z)
 end
 
-fn.BlinkToCursor = function() return BlinkTo('Cursor') end
+fn.BlinkToCursor = function() return BlinkTo('Entity') end
 fn.BlinkToMostFar = function() return BlinkTo('Most Far') end
 
 --------------------------------------------------------------------------------

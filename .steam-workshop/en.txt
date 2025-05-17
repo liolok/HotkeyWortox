@@ -3,9 +3,9 @@
 [*]Eat Soul
 [*]Release Soul
 [*]Store or Take Soul: Store into / take from Soul Jar, try to adjust the inventory bar Soul number to "ten short of overload limit".
-[*]Soul Hop in Place
-[*]Soul Hop to Cursor: Try to jump to the position of mouse cursor.
-[*]Soul Hop to Most Far: Try to jump to the furthest position directed by the mouse cursor.
+[*]Soul Hop in Place: Jump at the position of character.
+[*]Soul Hop to Object: Try to jump to the position of object under mouse cursor.
+[*]Soul Hop to Furthest: Try to jump to the furthest position directed by the mouse cursor.
 [/list]
 
 [h2]Credits[/h2]
