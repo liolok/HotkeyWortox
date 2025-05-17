@@ -58,8 +58,10 @@ Config(
   'UseSoulJar',
   T('Store or Take Soul', '存放或拿取灵魂'),
   T(
-    'Store into / take from Soul Jar, try to adjust the inventory bar Soul number to "ten short of overload limit".',
-    '存/取灵魂罐，尽量将物品栏灵魂数量调节为「差十个达到过载上限」。'
+    [[Store into / take from Soul Jar once, make inventory bar Soul number
+closer to "10 short of overload limit and not more than 40".]],
+    [[存/取一次灵魂罐，使物品栏灵魂数量趋近于
+「差 10 达到过载上限，且不超过 40」。]]
   )
 )
 Config(
