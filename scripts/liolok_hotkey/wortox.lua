@@ -146,7 +146,7 @@ fn.UseSoulJar = function()
   local num = math.abs(soul.total - target_count) -- number of soul to move
 
   if soul.total > target_count then -- inventory bar soul too many
-    return jar.min.percent < 100 and StoreSoul(jar.min.item, soul.slot, num) -- emptiest jar not full, store into it.
+    return StoreSoul(jar.min.item, soul.slot, num) -- try to store into it emptiest jar.
   else -- inventory soul too few, try to take some out of fullest jar
     return TakeSoul(jar.max.item, soul.slot, num)
   end
