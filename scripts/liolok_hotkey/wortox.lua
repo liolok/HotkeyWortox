@@ -180,8 +180,8 @@ local function GetTargetPosition(target)
     local entity = TheInput:GetWorldEntityUnderMouse()
     if not entity or entity:HasTag('CLASSIFIED') then return end
 
-    local pos = entity:GetPosition()
-    return pos.x, pos.z
+    local p = entity:GetPosition()
+    if TheWorld.Map:IsPassableAtPoint(p.x, 0, p.z) then return p.x, p.z end
   end
 
   local cursor = TheInput:GetWorldPosition()
