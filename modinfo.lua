@@ -15,6 +15,8 @@ and also adjustable in bottom of Settings > Controls page.]],
 api_version = 10
 dst_compatible = true
 client_only_mod = true
+icon = 'wortox.tex'
+icon_atlas = 'wortox.xml'
 configuration_options = {}
 
 local keyboard = { -- from STRINGS.UI.CONTROLSSCREEN.INPUTS[1] of strings.lua, need to match constants.lua too.
