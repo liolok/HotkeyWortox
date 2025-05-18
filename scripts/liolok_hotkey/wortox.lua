@@ -14,15 +14,13 @@ local function Ctl() return Get(ThePlayer, 'components', 'playercontroller') end
 
 local function Inv() return Get(ThePlayer, 'replica', 'inventory') end
 
-local function IsPlaying(character)
+fn.IsPlaying = function(character) -- to guard hotkeys
   if not (TheWorld and ThePlayer and ThePlayer.HUD) then return end -- in game, yeah
   if character and ThePlayer.prefab ~= character then return end -- optionally check for right character
   if ThePlayer.HUD:HasInputFocus() then return end -- typing or in some menu
   if not (Ctl() and Inv()) then return end -- for safe call later
   return true -- it's all good, man
 end
-
-fn.IsPlaying = IsPlaying
 
 --------------------------------------------------------------------------------
 -- wortox_soul | Soul | 灵魂
@@ -142,14 +140,10 @@ fn.UseSoulJar = function()
   local per_count = Get(TUNING, 'SKILLS', 'WORTOX', 'FILLED_SOULJAR_SOULCAP_INCREASE_PER') or 5
   if skill:IsActivated('wortox_souljar_2') then max_count = max_count + per_count * jar.total end
   local target_count = math.min(max_count - 10, 40)
-  if soul.item and soul.item:HasTag('nosouljar') then soul.total = soul.total - 1 end
-  local num = math.abs(soul.total - target_count) -- number of soul to move
-
-  if soul.total > target_count then -- inventory bar soul too many
-    return StoreSoul(jar.min.item, soul.slot, num) -- try to store into it emptiest jar.
-  else -- inventory soul too few, try to take some out of fullest jar
-    return TakeSoul(jar.max.item, soul.slot, num)
-  end
+  if soul.item and soul.item:HasTag('nosouljar') then soul.total = soul.total - 1 end -- in Soul Echo
+  local n = math.abs(soul.total - target_count) -- number of soul to move
+  return (soul.total > target_count) and StoreSoul(jar.min.item, soul.slot, n) -- inventory bar soul too many, try to store some into emptiest jar.
+    or TakeSoul(jar.max.item, soul.slot, n) -- inventory bar soul too few, try to take some out of fullest jar.
 end
 
 --------------------------------------------------------------------------------
@@ -174,9 +168,9 @@ local function GetTargetPosition(target)
   if not (ThePlayer and TheInput and TheWorld and TheWorld.Map and CanBlink()) then return end
 
   local player = ThePlayer:GetPosition()
-  if target == 'Player' then return player.x, player.z end
+  if target == 'player' then return player.x, player.z end
 
-  if target == 'Entity' then
+  if target == 'entity' then
     local entity = TheInput:GetWorldEntityUnderMouse()
     if not entity or entity:HasTag('CLASSIFIED') then return end
 
@@ -197,16 +191,31 @@ local function GetTargetPosition(target)
   end
 end
 
-fn.GetBlinkTargetPosition = GetTargetPosition
+local function BlinkTo(target) return SendRPCToServer(RPC.RightClick, ACTIONS.BLINK.code, GetTargetPosition(target)) end
 
-local function BlinkTo(target)
-  local x, z = GetTargetPosition(target)
-  return (x and z) and SendRPCToServer(RPC.RightClick, ACTIONS.BLINK.code, x, z)
+fn.BlinkInPlace = function() return BlinkTo('player') end
+fn.BlinkToEntity = function() return BlinkTo('entity') end
+fn.BlinkToMostFar = function() return BlinkTo('furthest') end
+
+fn.RefreshBlinkMarkers = function(self) -- inject playercontroller component
+  local OldOnUpdate = self.OnUpdate
+  self.OnUpdate = function(self, ...)
+    if not (ThePlayer and ThePlayer.prefab == 'wortox') then return OldOnUpdate(self, ...) end
+
+    for _, target in ipairs({ 'entity', 'furthest' }) do
+      local marker = 'blink_marker_wortox_' .. target
+      if TUNING['HOTKEY_WORTOX_' .. target:upper()] then -- key binding enabled
+        self[marker] = self[marker] or SpawnPrefab('blink_marker')
+        self[marker]:Refresh(GetTargetPosition(target))
+      elseif self[marker] then -- key binding disabled in game
+        self[marker]:Remove()
+        self[marker] = nil
+      end
+    end
+
+    return OldOnUpdate(self, ...)
+  end
 end
-
-fn.BlinkInPlace = function() return BlinkTo('Player') end
-fn.BlinkToEntity = function() return BlinkTo('Entity') end
-fn.BlinkToMostFar = function() return BlinkTo('Most Far') end
 
 --------------------------------------------------------------------------------
 
