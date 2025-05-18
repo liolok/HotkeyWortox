@@ -17,7 +17,15 @@ dst_compatible = true
 client_only_mod = true
 icon = 'wortox.tex'
 icon_atlas = 'wortox.xml'
-configuration_options = {}
+configuration_options = {
+  {
+    name = 'debug_mode',
+    label = T('Debug Mode', '调试模式'),
+    hover = T('Print log in console.', '在控制台打印日志'),
+    options = { { data = false, description = T('Off', '禁用') }, { data = true, description = T('On', '启用') } },
+    default = false,
+  },
+}
 
 local keyboard = { -- from STRINGS.UI.CONTROLSSCREEN.INPUTS[1] of strings.lua, need to match constants.lua too.
   { 'F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9', 'F10', 'F11', 'F12', 'Print', 'ScrolLock', 'Pause' },

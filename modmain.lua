@@ -1,3 +1,5 @@
+TUNING.HOTKEY_WORTOX_DEBUG = GetModConfigData('debug_mode')
+
 modimport('keybind')
 
 local Input = GLOBAL.TheInput

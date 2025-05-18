@@ -1,5 +1,7 @@
 local fn = {}
 
+local function dbg(...) return TUNING.HOTKEY_WORTOX_DEBUG and print('Hotkey for Wortox: ' .. string.format(...)) end
+
 -- shortcut for code like `ThePlayer and ThePlayer.replica and ThePlayer.replica.inventory`
 local function Get(head_node, ...)
   local current_node = head_node
@@ -34,11 +36,13 @@ local function FindInvItem(prefab)
 end
 
 fn.UseSoul = function()
+  dbg('Eating Soul')
   local soul = FindInvItem('wortox_soul')
   return soul and Ctl():RemoteUseItemFromInvTile(BufferedAction(ThePlayer, nil, ACTIONS.EAT, soul), soul)
 end
 
 fn.DropSoul = function()
+  dbg('Dropping Soul')
   local soul = FindInvItem('wortox_soul')
   return soul and Ctl():RemoteDropItemFromInvTile(soul)
 end
@@ -50,10 +54,11 @@ end
 local function StoreSoul(jar_item, soul_slot, soul_num)
   if not (jar_item and soul_slot and soul_num) then return end
 
+  dbg('Store %d Soul from slot %d', soul_num, soul_slot)
   SendRPCToServer(RPC.TakeActiveItemFromCountOfSlot, soul_slot, nil, soul_num) -- take souls from slot
   SendRPCToServer(RPC.UseItemFromInvTile, ACTIONS.STORE.code, jar_item) -- store as many souls into jar
   return ThePlayer:DoTaskInTime(0.4, function() -- put soul back into inventory bar slot
-    SendRPCToServer(RPC.AddAllOfActiveItemToSlot, soul_slot)
+    return SendRPCToServer(RPC.AddAllOfActiveItemToSlot, soul_slot)
   end)
 end
 
@@ -72,6 +77,7 @@ local is_jar_in_cd -- cooldown for Soul Jar Open/Close
 local function TakeSoul(jar_item, soul_slot, soul_num)
   if not jar_item then return end
 
+  dbg('Take %d Soul to slot %d', soul_num, soul_slot or GetFirstEmptySlot())
   is_jar_in_cd = ThePlayer:DoTaskInTime(1, function() is_jar_in_cd = nil end)
   local is_open = Get(jar_item, 'replica', 'container', '_isopen')
   if not is_open then ToggleJar(jar_item) end -- open jar if not already open
@@ -142,6 +148,7 @@ fn.UseSoulJar = function()
   local target_count = math.min(max_count - 10, 40)
   if soul.item and soul.item:HasTag('nosouljar') then soul.total = soul.total - 1 end -- in Soul Echo
   local n = math.abs(soul.total - target_count) -- number of soul to move
+  dbg('Inventory has %d Soul in total', soul.total)
   return (soul.total > target_count) and StoreSoul(jar.min.item, soul.slot, n) -- inventory bar soul too many, try to store some into emptiest jar.
     or TakeSoul(jar.max.item, soul.slot, n) -- inventory bar soul too few, try to take some out of fullest jar.
 end
