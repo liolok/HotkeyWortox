@@ -1,19 +1,29 @@
-[h2]Feature[/h2]
+[h3]Proudly presented by imp main for years! 😈[/h3]
+
+No need to restart game, [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3445951083]customize shortcuts[/url] in bottom of Settings > Controls page.
+
+[h2]Features[/h2]
 [list]
-[*]Eat Soul
-[*]Release Soul
-[*]Store or Take Soul: Store into / take from Soul Jar once, make inventory bar Soul number closer to "10 short of overload limit and not more than 40".
-[*]Soul Hop in Place: Jump at the position of character.
-[*]Soul Hop to Object: Jump to the position of object under mouse cursor.
-[*]Soul Hop to Furthest: Jump to the furthest position directed by the mouse cursor.
+[*]Eat Soul: Hold key till you're full.
+[*]Release Soul: Hold key to drop fast.
+[*]Balance Soul: Access Soul Jar, make inventory bar Soul number closer to "10 short of overload limit and not more than 40".
+(This action cancels Soul Echo, can be used to speed up Soul Decoy re-spawn.)
+[*]Soul Hop in Place: Jump at position of character.
+[*]Soul Hop to Object: Jump to passible position of object under mouse cursor, where will play portal animation.
+[*]Soul Hop to Furthest: Jump to furthest passible position directed by the mouse cursor, where will play portal animation.
 [/list]
 
-[h2]Credits[/h2]
+[h2]Recommendations[/h2]
 [list]
-[*]Soul Jar: [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3379520334]this mod of liang[/url]
-[*]Soul Hop: [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3129154416]this mod of 萌萌的新[/url]
+[*]Soul Hop: 川小胖's [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3456732110]Better Wortox Control[/url]
+[*]Knabsack: ninjabladeJr's [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3441092773]Knabsack Net Toggle[/url]
+[/list]
+
+[h2]Acknowledgements[/h2]
+[list]
+[*]liang: Soul Jar storing/taking operation
+[*]萌萌的新: Soul Hop target position calculation
 [/list]
 
 [hr][/hr]
-
 [url=https://github.com/liolok/HotkeyWortox]Source Code[/url]

@@ -62,16 +62,14 @@ local function Config(name, label, hover)
     { name = name, label = label, hover = hover, options = keys, default = 'KEY_DISABLED' }
 end
 
-Config('UseSoul', T('Eat Soul', '吃灵魂'))
-Config('DropSoul', T('Release Soul', '释放灵魂'))
+Config('UseSoul', T('Eat Soul', '吃灵魂'), T("Hold key till you're full.", '按住吃到饱'))
+Config('DropSoul', T('Release Soul', '释放灵魂'), T('Hold key to drop fast.', '按住快速丢'))
 Config(
   'UseSoulJar',
-  T('Store or Take Soul', '存放或拿取灵魂'),
+  T('Balance Soul', '存取灵魂'),
   T(
-    [[Store into / take from Soul Jar once, make inventory bar Soul number
-closer to "10 short of overload limit and not more than 40".]],
-    [[存/取一次灵魂罐，使物品栏灵魂数量趋近于
-「差 10 达到过载上限，且不超过 40」。]]
+    'Access Soul Jar, make inventory bar Soul number closer to "10 short of overload limit and not more than 40".',
+    '操作灵魂罐，使物品栏灵魂数量趋近于「差 10 达到过载上限，且不超过 40」'
   )
 )
 Config(
@@ -82,10 +80,16 @@ Config(
 Config(
   'BlinkToEntity',
   T('Soul Hop to Object', '精准灵魂跳跃'),
-  T('Jump to the position of object under mouse cursor.', '跳到鼠标光标下物体所在的位置')
+  T(
+    'Jump to passible position of object under mouse cursor, where will play portal animation.',
+    '跳到鼠标光标下方物体所在且可以落脚的位置，可以看到传送动画提示。'
+  )
 )
 Config(
   'BlinkToMostFar',
   T('Soul Hop to Furthest', '最远灵魂跳跃'),
-  T('Jump to the furthest position directed by the mouse cursor.', '跳到鼠标光标所指向的最远位置')
+  T(
+    'Jump to furthest passible position directed by the mouse cursor, where will play portal animation.',
+    '跳到鼠标光标所指方向最远且可以落脚的位置，可以看到传送动画提示。'
+  )
 )
