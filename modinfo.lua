@@ -2,8 +2,8 @@ local function T(en, zh, zht) return ChooseTranslationTable({ en, zh = zh, zht =
 
 name = T('Hotkey for Wortox', '热键：沃拓克斯')
 author = T('liolok', '李皓奇')
-local date = '2025-05-18'
-version = date .. '-2' -- for revision in same day
+local date = '2025-05-20'
+version = date .. '' -- for revision in same day
 description = T(
   [[󰀏 Tip:
 Enable this mod and click "Apply", its key bindings will be way more easy,
