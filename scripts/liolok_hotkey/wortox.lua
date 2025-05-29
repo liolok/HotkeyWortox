@@ -173,8 +173,10 @@ local function CanBlink()
   return true
 end
 
-local function GetTargetPosition(target)
-  if not (ThePlayer and TheInput and TheWorld and TheWorld.Map and CanBlink()) then return end
+local function CanBlinkTo(x, z) return x and z and TheWorld and TheWorld.Map and TheWorld.Map:IsPassableAtPoint(x, 0, z) end
+
+local function GetPosition(target)
+  if not (ThePlayer and TheInput and CanBlink()) then return end
 
   local player = ThePlayer:GetPosition()
   if target == 'player' then return player.x, player.z end
@@ -183,8 +185,10 @@ local function GetTargetPosition(target)
     local entity = TheInput:GetWorldEntityUnderMouse()
     if not entity or entity:HasTag('CLASSIFIED') then return end
 
-    local p = entity:GetPosition()
-    if TheWorld.Map:IsPassableAtPoint(p.x, 0, p.z) then return p.x, p.z end
+    entity = entity:GetPosition()
+    if not (entity and CanBlinkTo(entity.x, entity.z)) then return end
+
+    return entity.x, entity.z
   end
 
   local cursor = TheInput:GetWorldPosition()
@@ -196,26 +200,24 @@ local function GetTargetPosition(target)
   for dist = dist_max, dist_max / 3, -0.1 do
     local ratio = dist / distance
     local x, z = player.x + dx * ratio, player.z + dz * ratio
-    if TheWorld.Map:IsPassableAtPoint(x, 0, z) then return x, z end
+    if CanBlinkTo(x, z) then return x, z end
   end
 end
 
-local function BlinkTo(target) return SendRPCToServer(RPC.RightClick, ACTIONS.BLINK.code, GetTargetPosition(target)) end
-
-fn.BlinkInPlace = function() return BlinkTo('player') end
-fn.BlinkToEntity = function() return BlinkTo('entity') end
-fn.BlinkToMostFar = function() return BlinkTo('furthest') end
+fn.BlinkInPlace = function() return SendRPCToServer(RPC.RightClick, ACTIONS.BLINK.code, GetPosition('player')) end
+fn.BlinkToEntity = function() return SendRPCToServer(RPC.RightClick, ACTIONS.BLINK.code, GetPosition('entity')) end
+fn.BlinkToMostFar = function() return SendRPCToServer(RPC.RightClick, ACTIONS.BLINK.code, GetPosition('furthest')) end
 
 fn.RefreshBlinkMarkers = function(self) -- inject playercontroller component
   local OldOnUpdate = self.OnUpdate
   self.OnUpdate = function(self, ...)
-    if not (ThePlayer and ThePlayer.prefab == 'wortox') then return OldOnUpdate(self, ...) end
+    if Get(ThePlayer, 'prefab') ~= 'wortox' then return OldOnUpdate(self, ...) end
 
     for _, target in ipairs({ 'entity', 'furthest' }) do
       local marker = 'blink_marker_wortox_' .. target
       if TUNING['HOTKEY_WORTOX_' .. target:upper()] then -- key binding enabled
         self[marker] = self[marker] or SpawnPrefab('blink_marker')
-        self[marker]:Refresh(GetTargetPosition(target))
+        self[marker]:Refresh(GetPosition(target))
       elseif self[marker] then -- key binding disabled in game
         self[marker]:Remove()
         self[marker] = nil
