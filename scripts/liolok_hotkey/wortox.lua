@@ -142,10 +142,12 @@ fn.UseSoulJar = function()
   end
   if jar.total == 0 then return end -- no jar found
 
-  local max_count = Get(TUNING, 'WORTOX_MAX_SOULS') or 20 -- overload limit
+  local max_count = TUNING.WORTOX_MAX_SOULS or 20 -- overload limit
   local per_count = Get(TUNING, 'SKILLS', 'WORTOX', 'FILLED_SOULJAR_SOULCAP_INCREASE_PER') or 5
   if skill:IsActivated('wortox_souljar_2') then max_count = max_count + per_count * jar.total end
-  local target_count = math.min(max_count - 10, 40)
+  local is_greedy = TUNING.HOTKEY_WORTOX_GREED and (ThePlayer.wortox_inclination == 'naughty')
+  local target_count = max_count - (is_greedy and 0 or 10)
+  if target_count > 40 then target_count = 40 end
   if soul.item and soul.item:HasTag('nosouljar') then soul.total = soul.total - 1 end -- in Soul Echo
   local n = math.abs(soul.total - target_count) -- number of soul to move
   dbg('Inventory has %d Soul in total', soul.total)

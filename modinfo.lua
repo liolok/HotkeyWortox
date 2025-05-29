@@ -25,6 +25,16 @@ configuration_options = {
     options = { { data = false, description = T('Off', '禁用') }, { data = true, description = T('On', '启用') } },
     default = false,
   },
+  {
+    name = 'greed_mode',
+    label = T('Greed Mode', '贪婪模式'),
+    hover = T(
+      'When Naughty inclined, pull up the target number of "Balance Soul" to overload limit, no more reducing by ten.',
+      '淘气包倾向时，将「存取灵魂」的目标数量拉满至过载上限，不再减十。'
+    ),
+    options = { { data = false, description = T('Off', '禁用') }, { data = true, description = T('On', '启用') } },
+    default = false,
+  },
 }
 
 local keyboard = { -- from STRINGS.UI.CONTROLSSCREEN.INPUTS[1] of strings.lua, need to match constants.lua too.

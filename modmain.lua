@@ -1,4 +1,5 @@
 TUNING.HOTKEY_WORTOX_DEBUG = GetModConfigData('debug_mode')
+TUNING.HOTKEY_WORTOX_GREED = GetModConfigData('greed_mode')
 
 modimport('keybind')
 
