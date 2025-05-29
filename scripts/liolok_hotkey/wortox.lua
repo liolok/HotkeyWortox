@@ -4,12 +4,12 @@ local function dbg(...) return TUNING.HOTKEY_WORTOX_DEBUG and print('Hotkey for 
 
 -- shortcut for code like `ThePlayer and ThePlayer.replica and ThePlayer.replica.inventory`
 local function Get(head_node, ...)
-  local current_node = head_node
+  local current = head_node
   for _, key in ipairs({ ... }) do
-    if not current_node then return end
-    current_node = current_node[key]
+    if not current then return end
+    current = type(current[key]) == 'function' and current[key](current) or current[key]
   end
-  return current_node
+  return current
 end
 
 local function Ctl() return Get(ThePlayer, 'components', 'playercontroller') end
@@ -28,19 +28,14 @@ end
 -- wortox_soul | Soul | 灵魂
 
 local function GetLeastStackedSoul()
-  local inventory = Inv()
-  if not inventory then return end
-
   local least_stacked_soul
   local min_stack_size = 41
-  for _, item in pairs(inventory:GetItems()) do
-    if item and item.prefab == 'wortox_soul' then
-      local stack = Get(item, 'replica', 'stackable')
-      local size = stack and stack:StackSize()
-      if type(size) == 'number' and size < min_stack_size then
-        min_stack_size = size
-        least_stacked_soul = item
-      end
+  for _, item in pairs(Get(ThePlayer, 'replica', 'inventory', 'GetItems') or {}) do
+    local prefab = Get(item, 'prefab')
+    local stack_size = Get(item, 'replica', 'stackable', 'StackSize')
+    if prefab == 'wortox_soul' and type(stack_size) == 'number' and stack_size < min_stack_size then
+      min_stack_size = stack_size
+      least_stacked_soul = item
     end
   end
   return least_stacked_soul
@@ -127,28 +122,21 @@ fn.UseSoulJar = function()
   if inventory:GetActiveItem() then return end -- something is on mouse cursor, that'd be too much of trouble.
 
   local jar = { min = { percent = 101 }, max = { percent = -1 }, total = 0 } -- to find emptiest and fullest jar
-  local soul = { min = 41, total = 0 } -- to find slot and item with least soul
+  local soul = { min = { stack_size = 41 }, total = 0 } -- to find slot and item with least soul
 
   for i = 1, inventory:GetNumSlots() do -- look through all slots of inventory bar, left to right.
     local item = inventory:GetItemInSlot(i)
-    if item and item.prefab == 'wortox_souljar' then
-      local percent_used = Get(item, 'replica', 'inventoryitem', 'classified', 'percentused')
-      local percent = percent_used and percent_used:value()
-      if percent then
-        jar.total = jar.total + 1
-        if percent < jar.min.percent then jar.min = { percent = percent, item = item } end
-        if percent > jar.max.percent then jar.max = { percent = percent, item = item } end
-      end
+    local prefab = Get(item, 'prefab')
+    local percent = Get(item, 'replica', 'inventoryitem', 'classified', 'percentused', 'value')
+    local stack_size = Get(item, 'replica', 'stackable', 'StackSize')
+    if prefab == 'wortox_souljar' and type(percent) == 'number' then
+      jar.total = jar.total + 1
+      if percent < jar.min.percent then jar.min = { percent = percent, item = item } end
+      if percent > jar.max.percent then jar.max = { percent = percent, item = item } end
     end
-    if item and item.prefab == 'wortox_soul' then
-      local stackable = Get(item, 'replica', 'stackable')
-      local num = stackable and stackable:StackSize()
-      if num then
-        soul.total = soul.total + num
-        if num < soul.min then
-          soul.slot, soul.item, soul.min = i, item, num
-        end
-      end
+    if prefab == 'wortox_soul' and type(stack_size) == 'number' then
+      soul.total = soul.total + stack_size
+      if stack_size < soul.min.stack_size then soul.min = { slot = i, item = item, stack_size = stack_size } end
     end
   end
   if jar.total == 0 then return end -- no jar found
@@ -159,11 +147,11 @@ fn.UseSoulJar = function()
   local is_greedy = TUNING.HOTKEY_WORTOX_GREED and (ThePlayer.wortox_inclination == 'naughty')
   local target_count = max_count - (is_greedy and 0 or 10)
   if target_count > 40 then target_count = 40 end
-  if soul.item and soul.item:HasTag('nosouljar') then soul.total = soul.total - 1 end -- in Soul Echo
+  if soul.min.item and soul.min.item:HasTag('nosouljar') then soul.total = soul.total - 1 end -- in Soul Echo
   local n = math.abs(soul.total - target_count) -- number of soul to move
   dbg('Inventory has %d Soul in total', soul.total)
-  return (soul.total > target_count) and StoreSoul(jar.min.item, soul.slot, n) -- inventory bar soul too many, try to store some into emptiest jar.
-    or TakeSoul(jar.max.item, soul.slot, n) -- inventory bar soul too few, try to take some out of fullest jar.
+  return (soul.total > target_count) and StoreSoul(jar.min.item, soul.min.slot, n) -- inventory bar soul too many, try to store some into emptiest jar.
+    or TakeSoul(jar.max.item, soul.min.slot, n) -- inventory bar soul too few, try to take some out of fullest jar.
 end
 
 --------------------------------------------------------------------------------
