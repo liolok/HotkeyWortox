@@ -27,23 +27,34 @@ end
 --------------------------------------------------------------------------------
 -- wortox_soul | Soul | 灵魂
 
-local function FindInvItem(prefab)
+local function GetLeastStackedSoul()
   local inventory = Inv()
-  for slot = 1, inventory:GetNumSlots() do
-    local item = inventory:GetItemInSlot(slot)
-    if item and item.prefab == prefab then return item end
+  if not inventory then return end
+
+  local least_stacked_soul
+  local min_stack_size = 41
+  for _, item in pairs(inventory:GetItems()) do
+    if item and item.prefab == 'wortox_soul' then
+      local stack = Get(item, 'replica', 'stackable')
+      local size = stack and stack:StackSize()
+      if type(size) == 'number' and size < min_stack_size then
+        min_stack_size = size
+        least_stacked_soul = item
+      end
+    end
   end
+  return least_stacked_soul
 end
 
 fn.UseSoul = function()
   dbg('Eating Soul')
-  local soul = FindInvItem('wortox_soul')
+  local soul = GetLeastStackedSoul()
   return soul and Ctl():RemoteUseItemFromInvTile(BufferedAction(ThePlayer, nil, ACTIONS.EAT, soul), soul)
 end
 
 fn.DropSoul = function()
   dbg('Dropping Soul')
-  local soul = FindInvItem('wortox_soul')
+  local soul = GetLeastStackedSoul()
   return soul and Ctl():RemoteDropItemFromInvTile(soul)
 end
 
