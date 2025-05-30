@@ -7,7 +7,9 @@ local function Get(head_node, ...)
   local current = head_node
   for _, key in ipairs({ ... }) do
     if not current then return end
-    current = type(current[key]) == 'function' and current[key](current) or current[key]
+
+    local next = current[key]
+    current = type(next) == 'function' and next(current) or next
   end
   return current
 end
@@ -83,7 +85,8 @@ local is_jar_in_cd -- cooldown for Soul Jar Open/Close
 local function TakeSoul(jar_item, soul_slot, soul_num)
   if not jar_item then return end
 
-  dbg('Take %d Soul to slot %d', soul_num, soul_slot or GetFirstEmptySlot())
+  local target_slot = soul_slot or GetFirstEmptySlot()
+  dbg('Take %d Soul to slot %d', soul_num, target_slot)
   is_jar_in_cd = ThePlayer:DoTaskInTime(1, function() is_jar_in_cd = nil end)
   local is_open = Get(jar_item, 'replica', 'container', '_isopen')
   if not is_open then ToggleJar(jar_item) end -- open jar if not already open
@@ -91,7 +94,7 @@ local function TakeSoul(jar_item, soul_slot, soul_num)
     if soul_num > 0 then
       SendRPCToServer(RPC.TakeActiveItemFromCountOfSlot, 1, jar_item, soul_num) -- take souls from jar
       local rpc = soul_slot and RPC.AddAllOfActiveItemToSlot or RPC.PutAllOfActiveItemInSlot
-      SendRPCToServer(rpc, soul_slot or GetFirstEmptySlot()) -- put soul into inventory bar slot
+      SendRPCToServer(rpc, target_slot) -- put soul into inventory bar slot
     end
     return ToggleJar(jar_item) -- close jar
   end)
