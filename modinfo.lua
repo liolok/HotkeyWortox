@@ -103,3 +103,5 @@ Config(
     '跳到鼠标光标所指方向最远且可以落脚的位置，可以看到传送动画提示。'
   )
 )
+Config('MakeNabBag', T('Craft Knabsack', '制作强抢袋'))
+Config('MakeReviver', T('Craft Twintailed Heart', '制作双尾心'))

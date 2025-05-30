@@ -231,5 +231,13 @@ fn.RefreshBlinkMarkers = function(self) -- inject playercontroller component
 end
 
 --------------------------------------------------------------------------------
+-- Craft | 制作
+
+local function Make(prefab) return SendRPCToServer(RPC.MakeRecipeFromMenu, Get(AllRecipes, prefab, 'rpc_id')) end
+
+fn.MakeNabBag = function() return Make('wortox_nabbag') end -- Knabsack | 强抢袋
+fn.MakeReviver = function() return Make('wortox_reviver') end -- Twintailed Heart | 双尾心
+
+--------------------------------------------------------------------------------
 
 return fn
