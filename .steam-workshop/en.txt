@@ -7,10 +7,15 @@ No need to restart game, [url=https://steamcommunity.com/sharedfiles/filedetails
 [*]Eat Soul: Hold key till you're full.
 [*]Release Soul: Hold key to drop fast.
 [*]Balance Soul: Access Soul Jar, make inventory bar Soul number closer to "10 short of overload limit and not more than 40".
-(This action cancels Soul Echo, can be used to speed up Soul Decoy re-spawn.)
+  [list]
+  [*]Tips: This action cancels Soul Echo, can be used to speed up Soul Decoy re-spawn.
+  [*]Greed Mode: When Naughty inclined, pull up the target number to overload limit, no more reducing by ten.
+  [/list]
 [*]Soul Hop in Place: Jump at position of character.
 [*]Soul Hop to Object: Jump to passible position of object under mouse cursor, where will play portal animation.
 [*]Soul Hop to Furthest: Jump to furthest passible position directed by the mouse cursor, where will play portal animation.
+[*]Craft Knabsack
+[*]Craft Twintailed Heart
 [/list]
 
 [h2]Recommendations[/h2]
