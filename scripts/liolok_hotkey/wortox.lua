@@ -122,7 +122,8 @@ fn.UseSoulJar = function()
   if not (skill and skill:IsActivated('wortox_souljar_1')) then return end -- can not use jar at all
 
   local inventory = Inv()
-  if inventory:GetActiveItem() then return end -- something is on mouse cursor, that'd be too much of trouble.
+  local prefab_on_cursor = Get(inventory:GetActiveItem(), 'prefab') -- return Soul or Soul Jar on cursor to inventory
+  if prefab_on_cursor == 'wortox_soul' or prefab_on_cursor == 'wortox_souljar' then inventory:ReturnActiveItem() end
 
   local jar = { min = { percent = 101 }, max = { percent = -1 }, total = 0 } -- to find emptiest and fullest jar
   local soul = { min = { stack_size = 41 }, total = 0 } -- to find slot and item with least soul
@@ -153,6 +154,7 @@ fn.UseSoulJar = function()
   if soul.min.item and soul.min.item:HasTag('nosouljar') then soul.total = soul.total - 1 end -- in Soul Echo
   local n = math.abs(soul.total - target_count) -- number of soul to move
   dbg('Inventory has %d Soul in total', soul.total)
+  inventory:ReturnActiveItem() -- if something is on mouse cursor, return it to inventory or it'd block storing/taking actions.
   return (soul.total > target_count) and StoreSoul(jar.min.item, soul.min.slot, n) -- inventory bar soul too many, try to store some into emptiest jar.
     or TakeSoul(jar.max.item, soul.min.slot, n) -- inventory bar soul too few, try to take some out of fullest jar.
 end
