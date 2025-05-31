@@ -9,7 +9,11 @@ local function Get(head_node, ...)
     if not current then return end
 
     local next = current[key]
-    current = type(next) == 'function' and next(current) or next
+    if type(next) == 'function' then
+      current = next(current) -- this could be `false` so avoid using `and next(current) or next` assignment
+    else
+      current = next
+    end
   end
   return current
 end
@@ -101,17 +105,12 @@ local function TakeSoul(jar_item, soul_slot, soul_num)
   end)
 end
 
-local function IsJumping()
-  local as = Get(ThePlayer, 'AnimState')
-  return as and (as:IsCurrentAnimation('wortox_portal_jumpin') or as:IsCurrentAnimation('wortox_portal_jumpout'))
-end
-
 local task_delay
 
 fn.UseSoulJar = function()
   if is_jar_in_cd then return end
 
-  if IsJumping() then
+  if not ThePlayer:HasOneOfTags('idle', 'moving') then
     task_delay = task_delay or ThePlayer:DoPeriodicTask(FRAMES, fn.UseSoulJar)
     return
   elseif task_delay then
@@ -164,21 +163,19 @@ end
 -- blink | Soul Hop | 灵魂跳跃
 -- credits: workshop-3129154416 of 萌萌的新
 
-local function CanBlink()
-  if Get(ThePlayer, 'CanSoulhop') and not ThePlayer:CanSoulhop() then return end -- no inventory soul or riding
-
-  if IsJumping() then return end
-
-  local inventory = Inv()
-  if not inventory or inventory:GetActiveItem() then return end -- something is on mouse cursor
-
-  local hand_item = inventory:GetEquippedItem(EQUIPSLOTS.HANDS)
-  if hand_item and hand_item.prefab == 'orangestaff' then return end -- The Lazy Explorer is equipped
-
-  return true
+local function IsJumping()
+  local as = Get(ThePlayer, 'AnimState')
+  return as and (as:IsCurrentAnimation('wortox_portal_jumpin') or as:IsCurrentAnimation('wortox_portal_jumpout'))
 end
 
-local function CanBlinkTo(x, z) return x and z and TheWorld and TheWorld.Map and TheWorld.Map:IsPassableAtPoint(x, 0, z) end
+local function CanBlink()
+  return Get(ThePlayer, 'CanSoulhop') -- has inventory soul and not riding
+    and not IsJumping() -- not already jumping
+    and not Inv():GetActiveItem() -- nothing is blocking mouse cursor
+    and Get(Inv():GetEquippedItem(EQUIPSLOTS.HANDS), 'prefab') ~= 'orangestaff' -- not equipping The Lazy Explorer
+end
+
+local function IsPassable(x, z) return x and z and TheWorld and TheWorld.Map and TheWorld.Map:IsPassableAtPoint(x, 0, z) end
 
 local function GetPosition(target)
   if not (ThePlayer and TheInput and CanBlink()) then return end
@@ -191,7 +188,7 @@ local function GetPosition(target)
     if not entity or entity:HasTag('CLASSIFIED') then return end
 
     entity = entity:GetPosition()
-    if not (entity and CanBlinkTo(entity.x, entity.z)) then return end
+    if not (entity and IsPassable(entity.x, entity.z)) then return end
 
     return entity.x, entity.z
   end
@@ -205,7 +202,7 @@ local function GetPosition(target)
   for dist = dist_max, dist_max / 3, -0.1 do
     local ratio = dist / distance
     local x, z = player.x + dx * ratio, player.z + dz * ratio
-    if CanBlinkTo(x, z) then return x, z end
+    if IsPassable(x, z) then return x, z end
   end
 end
 
