@@ -59,10 +59,13 @@ end
 -- wortox_souljar | Soul Jar | 灵魂罐
 -- credit: workshop-3379520334 of liang
 
+local is_jar_in_cd -- cooldown for Soul Jar
+
 local function StoreSoul(jar_item, soul_slot, soul_num)
   if not (jar_item and soul_slot and soul_num) then return end
 
   dbg('Store %d Soul from slot %d', soul_num, soul_slot)
+  is_jar_in_cd = ThePlayer:DoTaskInTime(0.5, function() is_jar_in_cd = nil end)
   SendRPCToServer(RPC.TakeActiveItemFromCountOfSlot, soul_slot, nil, soul_num) -- take souls from slot
   SendRPCToServer(RPC.UseItemFromInvTile, ACTIONS.STORE.code, jar_item) -- store as many souls into jar
   return ThePlayer:DoTaskInTime(0.4, function() -- put soul back into inventory bar slot
@@ -79,8 +82,6 @@ local function GetFirstEmptySlot()
     if not inventory:GetItemInSlot(slot) then return slot end
   end
 end
-
-local is_jar_in_cd -- cooldown for Soul Jar Open/Close
 
 local function TakeSoul(jar_item, soul_slot, soul_num)
   if not jar_item then return end
