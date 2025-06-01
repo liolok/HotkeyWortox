@@ -1,6 +1,7 @@
 local fn = {}
+local T = TUNING.HOTKEY_WORTOX or {}
 
-local function dbg(...) return TUNING.HOTKEY_WORTOX_DEBUG and print('Hotkey for Wortox: ' .. string.format(...)) end
+local function dbg(...) return T.DEBUG and print('Hotkey for Wortox: ' .. string.format(...)) end
 
 -- shortcut for code like `ThePlayer and ThePlayer.replica and ThePlayer.replica.inventory`
 local function Get(head_node, ...)
@@ -35,7 +36,7 @@ end
 
 local function GetLeastStackedSoul()
   local least_stacked_soul
-  local min_stack_size = 41
+  local min_stack_size = 1 + (TUNING.STACK_SIZE_SMALLITEM or 40)
   for _, item in pairs(Get(ThePlayer, 'replica', 'inventory', 'GetItems') or {}) do
     local prefab = Get(item, 'prefab')
     local stack_size = Get(item, 'replica', 'stackable', 'StackSize')
@@ -63,13 +64,10 @@ end
 -- wortox_souljar | Soul Jar | 灵魂罐
 -- credit: workshop-3379520334 of liang
 
-local is_jar_in_cd -- cooldown for Soul Jar
-
 local function StoreSoul(jar_item, soul_slot, soul_num)
   if not (jar_item and soul_slot and soul_num) then return end
 
   dbg('Store %d Soul from slot %d', soul_num, soul_slot)
-  is_jar_in_cd = ThePlayer:DoTaskInTime(0.5, function() is_jar_in_cd = nil end)
   SendRPCToServer(RPC.TakeActiveItemFromCountOfSlot, soul_slot, nil, soul_num) -- take souls from slot
   SendRPCToServer(RPC.UseItemFromInvTile, ACTIONS.STORE.code, jar_item) -- store as many souls into jar
   return ThePlayer:DoTaskInTime(0.4, function() -- put soul back into inventory bar slot
@@ -92,7 +90,6 @@ local function TakeSoul(jar_item, soul_slot, soul_num)
 
   local target_slot = soul_slot or GetFirstEmptySlot()
   dbg('Take %d Soul to slot %d', soul_num, target_slot)
-  is_jar_in_cd = ThePlayer:DoTaskInTime(1, function() is_jar_in_cd = nil end)
   local is_open = Get(jar_item, 'replica', 'container', '_isopen')
   if not is_open then ToggleJar(jar_item) end -- open jar if not already open
   return ThePlayer:DoTaskInTime(is_open and 0 or 0.4, function() -- wait to ensure jar is open
@@ -105,31 +102,34 @@ local function TakeSoul(jar_item, soul_slot, soul_num)
   end)
 end
 
-local task_delay
+local is_jar_in_cd -- cooldown for Soul Jar
+local delay_task
 
 fn.UseSoulJar = function()
   if is_jar_in_cd then return end
 
   if not ThePlayer:HasOneOfTags('idle', 'moving') then
-    task_delay = task_delay or ThePlayer:DoPeriodicTask(FRAMES, fn.UseSoulJar)
-    return
-  elseif task_delay then
-    task_delay:Cancel()
-    task_delay = nil
+    delay_task = delay_task or ThePlayer:DoPeriodicTask(FRAMES, fn.UseSoulJar)
+    return -- wait for player is idle or moving
+  elseif delay_task then
+    delay_task:Cancel()
+    delay_task = nil
   end
+
+  is_jar_in_cd = ThePlayer:DoTaskInTime(0.5, function() is_jar_in_cd = nil end)
 
   local skill = Get(ThePlayer, 'components', 'skilltreeupdater')
   if not (skill and skill:IsActivated('wortox_souljar_1')) then return end -- can not use jar at all
 
-  local inventory = Inv()
-  local prefab_on_cursor = Get(inventory:GetActiveItem(), 'prefab') -- return Soul or Soul Jar on cursor to inventory
-  if prefab_on_cursor == 'wortox_soul' or prefab_on_cursor == 'wortox_souljar' then inventory:ReturnActiveItem() end
+  local inv = Inv()
+  local prefab_on_cursor = Get(inv:GetActiveItem(), 'prefab') -- return Soul or Soul Jar on cursor to inventory
+  if prefab_on_cursor == 'wortox_soul' or prefab_on_cursor == 'wortox_souljar' then inv:ReturnActiveItem() end
 
   local jar = { min = { percent = 101 }, max = { percent = -1 }, total = 0 } -- to find emptiest and fullest jar
-  local soul = { min = { stack_size = 41 }, total = 0 } -- to find slot and item with least soul
+  local soul = { min = { stack_size = 1 + (TUNING.STACK_SIZE_SMALLITEM or 40) }, total = 0 } -- to find slot and item with least soul
 
-  for i = 1, inventory:GetNumSlots() do -- look through all slots of inventory bar, left to right.
-    local item = inventory:GetItemInSlot(i)
+  for i = 1, inv:GetNumSlots() do -- look through all slots of inventory bar, left to right.
+    local item = inv:GetItemInSlot(i)
     local prefab = Get(item, 'prefab')
     local percent = Get(item, 'replica', 'inventoryitem', 'classified', 'percentused', 'value')
     local stack_size = Get(item, 'replica', 'stackable', 'StackSize')
@@ -146,15 +146,15 @@ fn.UseSoulJar = function()
   if jar.total == 0 then return end -- no jar found
 
   local max_count = TUNING.WORTOX_MAX_SOULS or 20 -- overload limit
-  local per_count = Get(TUNING, 'SKILLS', 'WORTOX', 'FILLED_SOULJAR_SOULCAP_INCREASE_PER') or 5
+  local per_count = TUNING.SKILLS.WORTOX.FILLED_SOULJAR_SOULCAP_INCREASE_PER or 5
   if skill:IsActivated('wortox_souljar_2') then max_count = max_count + per_count * jar.total end
-  local is_greedy = TUNING.HOTKEY_WORTOX_GREED and (ThePlayer.wortox_inclination == 'naughty')
+  local is_greedy = T.GREED and (ThePlayer.wortox_inclination == 'naughty')
   local target_count = max_count - (is_greedy and 0 or 10)
   if target_count > 40 then target_count = 40 end
   if soul.min.item and soul.min.item:HasTag('nosouljar') then soul.total = soul.total - 1 end -- in Soul Echo
   local n = math.abs(soul.total - target_count) -- number of soul to move
   dbg('Inventory has %d Soul in total', soul.total)
-  inventory:ReturnActiveItem() -- if something is on mouse cursor, return it to inventory or it'd block storing/taking actions.
+  inv:ReturnActiveItem() -- if something is on mouse cursor, return it to inventory or it'd block storing/taking actions.
   return (soul.total > target_count) and StoreSoul(jar.min.item, soul.min.slot, n) -- inventory bar soul too many, try to store some into emptiest jar.
     or TakeSoul(jar.max.item, soul.min.slot, n) -- inventory bar soul too few, try to take some out of fullest jar.
 end
@@ -215,9 +215,9 @@ fn.RefreshBlinkMarkers = function(self) -- inject playercontroller component
   self.OnUpdate = function(self, ...)
     if Get(ThePlayer, 'prefab') ~= 'wortox' then return OldOnUpdate(self, ...) end
 
-    for _, target in ipairs({ 'entity', 'furthest' }) do
-      local marker = 'blink_marker_wortox_' .. target
-      if TUNING['HOTKEY_WORTOX_' .. target:upper()] then -- key binding enabled
+    for target, func_name in pairs({ entity = 'BlinkToEntity', furthest = 'BlinkToMostFar' }) do
+      local marker = 'wortox_blink_marker_to_' .. target
+      if Get(T, 'handler', func_name) then -- key binding enabled
         self[marker] = self[marker] or SpawnPrefab('blink_marker')
         self[marker]:Refresh(GetPosition(target))
       elseif self[marker] then -- key binding disabled in game

@@ -1,24 +1,22 @@
-TUNING.HOTKEY_WORTOX_DEBUG = GetModConfigData('debug_mode')
-TUNING.HOTKEY_WORTOX_GREED = GetModConfigData('greed_mode')
+TUNING.HOTKEY_WORTOX = {}
+local T = TUNING.HOTKEY_WORTOX
+T.DEBUG = GetModConfigData('debug_mode')
+T.GREED = GetModConfigData('greed_mode')
+T.handler = {} -- config name to key event handlers
 
 modimport('keybind')
 
 local Input = GLOBAL.TheInput
-local handler = {} -- config name to key event handlers
-local fn = require('liolok_hotkey/wortox')
+local FN = require('liolok_hotkey/wortox')
 
 PrefabFiles = { 'blink_marker' } -- Soul Hop target position display | 灵魂跳跃目标位置显示
-AddComponentPostInit('playercontroller', fn.RefreshBlinkMarkers)
+AddComponentPostInit('playercontroller', FN.RefreshBlinkMarkers)
 
 function KeyBind(name, key)
   -- disable old binding
-  if handler[name] then handler[name]:Remove() end
-
-  -- to display target position only if these two hotkeys have binding
-  if name == 'BlinkToEntity' then TUNING.HOTKEY_WORTOX_ENTITY = key ~= nil end
-  if name == 'BlinkToMostFar' then TUNING.HOTKEY_WORTOX_FURTHEST = key ~= nil end
+  if T.handler[name] then T.handler[name]:Remove() end
 
   -- new binding
-  local function f(_key, down) return (_key == key and down and fn.IsPlaying('wortox')) and fn[name]() end
-  handler[name] = key and (key >= 1000 and Input:AddMouseButtonHandler(f) or Input:AddKeyHandler(f))
+  local function f(_key, down) return (_key == key and down and FN.IsPlaying('wortox')) and FN[name]() end
+  T.handler[name] = key and (key >= 1000 and Input:AddMouseButtonHandler(f) or Input:AddKeyHandler(f))
 end
