@@ -89,11 +89,11 @@ local function TakeSoul(jar_item, soul_slot, soul_num)
   if not jar_item then return end
 
   local target_slot = soul_slot or GetFirstEmptySlot()
-  dbg('Take %d Soul to slot %d', soul_num, target_slot)
   local is_open = Get(jar_item, 'replica', 'container', '_isopen')
   if not is_open then ToggleJar(jar_item) end -- open jar if not already open
   return ThePlayer:DoTaskInTime(is_open and 0 or 0.4, function() -- wait to ensure jar is open
-    if soul_num > 0 then
+    if target_slot and soul_num > 0 then
+      dbg('Take %d Soul to slot %d', soul_num, target_slot)
       SendRPCToServer(RPC.TakeActiveItemFromCountOfSlot, 1, jar_item, soul_num) -- take souls from jar
       local rpc = soul_slot and RPC.AddAllOfActiveItemToSlot or RPC.PutAllOfActiveItemInSlot
       SendRPCToServer(rpc, target_slot) -- put soul into inventory bar slot
