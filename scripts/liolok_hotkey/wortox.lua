@@ -181,34 +181,36 @@ local function GetPosition(target)
   if not (ThePlayer and TheInput and CanBlink()) then return end
 
   local player = ThePlayer:GetPosition()
-  if target == 'player' then return player.x, player.z end
-
-  if target == 'entity' then
+  if target == 'player' then
+    return player.x, player.z
+  elseif target == 'entity' then
     local entity = TheInput:GetWorldEntityUnderMouse()
-    if not entity or entity:HasTag('CLASSIFIED') then return end
-
-    entity = entity:GetPosition()
-    if not (entity and IsPassable(entity.x, entity.z)) then return end
-
-    return entity.x, entity.z
-  end
-
-  local cursor = TheInput:GetWorldPosition()
-  local dx, dz = cursor.x - player.x, cursor.z - player.z
-  local distance = math.sqrt(dx ^ 2 + dz ^ 2) -- distance between player and cursor
-  local dist_max = ACTIONS.BLINK.distance or 36
-  if distance < dist_max / 9 then return end -- dead zone
-
-  for dist = dist_max, dist_max / 3, -0.1 do
-    local ratio = dist / distance
-    local x, z = player.x + dx * ratio, player.z + dz * ratio
-    if IsPassable(x, z) then return x, z end
+    local is_classified = entity and entity:HasTag('CLASSIFIED')
+    local x, z = Get(entity, 'GetPosition', 'x'), Get(entity, 'GetPosition', 'z')
+    if is_classified == false and IsPassable(x, z) then return x, z end
+  elseif target == 'furthest' then
+    local cursor = TheInput:GetWorldPosition()
+    local dx, dz = cursor.x - player.x, cursor.z - player.z
+    local distance = math.sqrt(dx ^ 2 + dz ^ 2) -- distance between player and cursor
+    local dist_max = ACTIONS.BLINK.distance or 36
+    if distance > dist_max / 9 then -- dead zone
+      for dist = dist_max, dist_max / 3, -0.1 do
+        local ratio = dist / distance
+        local x, z = player.x + dx * ratio, player.z + dz * ratio
+        if IsPassable(x, z) then return x, z end
+      end
+    end
   end
 end
 
-fn.BlinkInPlace = function() return SendRPCToServer(RPC.RightClick, ACTIONS.BLINK.code, GetPosition('player')) end
-fn.BlinkToEntity = function() return SendRPCToServer(RPC.RightClick, ACTIONS.BLINK.code, GetPosition('entity')) end
-fn.BlinkToMostFar = function() return SendRPCToServer(RPC.RightClick, ACTIONS.BLINK.code, GetPosition('furthest')) end
+local function BlinkTo(target)
+  local x, z = GetPosition(target)
+  return x and z and SendRPCToServer(RPC.RightClick, ACTIONS.BLINK.code, x, z)
+end
+
+fn.BlinkInPlace = function() return BlinkTo('player') end
+fn.BlinkToEntity = function() return BlinkTo('entity') end
+fn.BlinkToMostFar = function() return BlinkTo('furthest') end
 
 fn.RefreshBlinkMarkers = function(self) -- inject playercontroller component
   local OldOnUpdate = self.OnUpdate
