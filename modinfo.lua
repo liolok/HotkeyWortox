@@ -17,25 +17,6 @@ dst_compatible = true
 client_only_mod = true
 icon = 'wortox.tex'
 icon_atlas = 'wortox.xml'
-configuration_options = {
-  {
-    name = 'debug_mode',
-    label = T('Debug Mode', '调试模式'),
-    hover = T('Print log in console.', '在控制台打印日志'),
-    options = { { data = false, description = T('Off', '禁用') }, { data = true, description = T('On', '启用') } },
-    default = false,
-  },
-  {
-    name = 'greed_mode',
-    label = T('Greed Mode', '贪婪模式'),
-    hover = T(
-      'When Naughty inclined, pull up the target number of "Balance Soul" to overload limit, no more reducing by ten.',
-      '淘气包倾向时，将「存取灵魂」的目标数量拉满至过载上限，不再减十。'
-    ),
-    options = { { data = false, description = T('Off', '禁用') }, { data = true, description = T('On', '启用') } },
-    default = false,
-  },
-}
 
 local keyboard = { -- from STRINGS.UI.CONTROLSSCREEN.INPUTS[1] of strings.lua, need to match constants.lua too.
   { 'F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9', 'F10', 'F11', 'F12', 'Print', 'ScrolLock', 'Pause' },
@@ -67,14 +48,32 @@ for i = 1, #numpad do
   keys[#keys + 1] = { description = 'Numpad ' .. key, data = 'KEY_KP_' .. key:upper() }
 end
 
-local function Config(name, label, hover)
+configuration_options = {}
+
+local function Config(conf_type, name, label, hover)
+  local options, default = { { description = '', data = 0 } }, 0 -- header
+  if conf_type == 'hotkey' then
+    options, default = keys, 'KEY_DISABLED'
+  elseif conf_type == 'boolean' then
+    options = { { data = false, description = T('Off', '关闭') }, { data = true, description = T('On', '开启') } }
+    default = false
+  end
   configuration_options[#configuration_options + 1] =
-    { name = name, label = label, hover = hover, options = keys, default = 'KEY_DISABLED' }
+    { name = name, label = label, hover = hover, options = options, default = default }
 end
 
-Config('UseSoul', T('Eat Soul', '吃灵魂'), T("Hold key till you're full.", '按住吃到饱'))
-Config('DropSoul', T('Release Soul', '释放灵魂'), T('Hold key to drop fast.', '按住快速丢'))
-Config(
+local function Switch(...) return Config('boolean', ...) end
+local function Header(...) return Config('header', T(...)) end
+local function Hotkey(...) return Config('hotkey', ...) end
+
+Switch('debug_mode', T('Debug Mode', '调试模式'), T('Print log in console.', '在控制台打印日志'))
+
+Header('Soul', '灵魂')
+Hotkey('UseSoul', T('Eat Soul', '吃灵魂'), T("Hold key till you're full.", '按住吃到饱'))
+Hotkey('DropSoul', T('Release Soul', '释放灵魂'), T('Hold key to drop fast.', '按住快速丢'))
+
+Header('Soul Jar', '灵魂罐')
+Hotkey(
   'UseSoulJar',
   T('Balance Soul', '存取灵魂'),
   T(
@@ -82,12 +81,22 @@ Config(
     '操作灵魂罐，使物品栏灵魂数量趋近于「差 10 达到过载上限，且不超过 40」'
   )
 )
-Config(
+Switch(
+  'greed_mode',
+  T('Greed Mode', '贪婪模式'),
+  T(
+    'When Naughty inclined, pull up the target number of "Balance Soul" to overload limit, no more reducing by ten.',
+    '淘气包倾向时，将「存取灵魂」的目标数量拉满至过载上限，不再减十。'
+  )
+)
+
+Header('Soul Hop', '灵魂跳跃')
+Hotkey(
   'BlinkInPlace',
   T('Soul Hop in Place', '原地灵魂跳跃'),
   T('Jump at the position of character.', '在角色所在位置跳跃')
 )
-Config(
+Hotkey(
   'BlinkToEntity',
   T('Soul Hop to Object', '精准灵魂跳跃'),
   T(
@@ -95,7 +104,7 @@ Config(
     '跳到鼠标光标下方物体所在且可以落脚的位置，可以看到传送动画提示。'
   )
 )
-Config(
+Hotkey(
   'BlinkToMostFar',
   T('Soul Hop to Furthest', '最远灵魂跳跃'),
   T(
@@ -103,5 +112,15 @@ Config(
     '跳到鼠标光标所指方向最远且可以落脚的位置，可以看到传送动画提示。'
   )
 )
-Config('MakeNabBag', T('Craft Knabsack', '制作强抢袋'))
-Config('MakeReviver', T('Craft Twintailed Heart', '制作双尾心'))
+Switch(
+  'static_blink_marker',
+  T('Static Position Prompt', '静态位置提示'),
+  T(
+    'Almost zero animation of target position prompt for "Soul Hop to Object" and "Soul Hop to Furthest".',
+    '精准和最远灵魂跳跃的传送位置的提示接近零动画。'
+  )
+)
+
+Header('Quick Craft', '快速制作')
+Hotkey('MakeNabBag', T('Craft Knabsack', '制作强抢袋'))
+Hotkey('MakeReviver', T('Craft Twintailed Heart', '制作双尾心'))

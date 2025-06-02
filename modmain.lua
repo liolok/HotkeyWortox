@@ -2,6 +2,7 @@ TUNING.HOTKEY_WORTOX = {}
 local T = TUNING.HOTKEY_WORTOX
 T.DEBUG = GetModConfigData('debug_mode')
 T.GREED = GetModConfigData('greed_mode')
+T.SPIN_MARKER = not GetModConfigData('static_blink_marker')
 T.handler = {} -- config name to key event handlers
 
 modimport('keybind')

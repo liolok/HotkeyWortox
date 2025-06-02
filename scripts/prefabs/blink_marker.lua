@@ -1,3 +1,5 @@
+local SPIN = TUNING.HOTKEY_WORTOX and TUNING.HOTKEY_WORTOX.SPIN_MARKER
+
 return Prefab('blink_marker', function()
   local inst = CreateEntity()
 
@@ -26,10 +28,9 @@ return Prefab('blink_marker', function()
       inst.Transform:SetPosition(x, 0, z)
       if inst.shown then return end
       inst.AnimState:PlayAnimation('buff_pre')
-      inst.AnimState:PushAnimation('buff_idle', true)
+      if SPIN then inst.AnimState:PushAnimation('buff_idle', true) end
       inst.shown = true
-    else
-      if not inst.shown then return end
+    elseif inst.shown then
       inst.AnimState:PlayAnimation('buff_pst')
       inst.shown = false
     end
