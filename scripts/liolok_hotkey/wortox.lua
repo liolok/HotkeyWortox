@@ -103,19 +103,11 @@ local function TakeSoul(jar_item, soul_slot, soul_num)
 end
 
 local is_jar_in_cd -- cooldown for Soul Jar
-local delay_task
 
 fn.UseSoulJar = function()
+  if ThePlayer:HasTag('busy') then return ThePlayer:DoTaskInTime(FRAMES, fn.UseSoulJar) end
+
   if is_jar_in_cd then return end
-
-  if not ThePlayer:HasOneOfTags('idle', 'moving') then
-    delay_task = delay_task or ThePlayer:DoPeriodicTask(FRAMES, fn.UseSoulJar)
-    return -- wait for player is idle or moving
-  elseif delay_task then
-    delay_task:Cancel()
-    delay_task = nil
-  end
-
   is_jar_in_cd = ThePlayer:DoTaskInTime(0.5, function() is_jar_in_cd = nil end)
 
   local skill = Get(ThePlayer, 'components', 'skilltreeupdater')
