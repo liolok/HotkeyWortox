@@ -9,7 +9,7 @@
 [*]存取灵魂：操作灵魂罐，使物品栏灵魂数量趋近于「差 10 达到过载上限，且不超过 40」
   [list]
   [*]小提示：本操作会取消灵魂回声，可以用来尽快再生灵魂诱饵。
-  [*]贪婪模式：淘气包倾向时，将目标数量拉满到过载上限，不再减十。
+  [*]可开启贪婪模式：淘气包倾向时，将目标数量拉满到过载上限，不再减十。
   [/list]
 [*]原地灵魂跳跃：在角色所在位置跳跃
 [*]精准灵魂跳跃：跳到鼠标光标下方物体所在且可以落脚的位置，可以看到传送动画提示。
@@ -22,6 +22,7 @@
 [list]
 [*]灵魂跳跃：川小胖的[url=https://steamcommunity.com/sharedfiles/filedetails/?id=3456732110]小恶魔操作优化[/url]
 [*]强抢袋：ninjabladeJr 的[url=https://steamcommunity.com/sharedfiles/filedetails/?id=3441092773]强抢袋捕虫功能开关[/url]
+[*]小恶魔之外的各种功能：[url=https://steamcommunity.com/sharedfiles/filedetails/?id=3493636737]热键：李皓奇[/url]
 [/list]
 
 [h2]致谢[/h2]

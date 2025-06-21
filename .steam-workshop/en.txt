@@ -9,7 +9,7 @@ No need to restart game, [url=https://steamcommunity.com/sharedfiles/filedetails
 [*]Balance Soul: Access Soul Jar, make inventory bar Soul number closer to "10 short of overload limit and not more than 40".
   [list]
   [*]Tips: This action cancels Soul Echo, can be used to speed up Soul Decoy re-spawn.
-  [*]Greed Mode: When Naughty inclined, pull up the target number to overload limit, no more reducing by ten.
+  [*]Greed Mode Available: When Naughty inclined, pull up the target number to overload limit, no more reducing by ten.
   [/list]
 [*]Soul Hop in Place: Jump at position of character.
 [*]Soul Hop to Object: Jump to passible position of object under mouse cursor, where will play portal animation.
@@ -22,6 +22,7 @@ No need to restart game, [url=https://steamcommunity.com/sharedfiles/filedetails
 [list]
 [*]Soul Hop: 川小胖's [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3456732110]Better Wortox Control[/url]
 [*]Knabsack: ninjabladeJr's [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3441092773]Knabsack Net Toggle[/url]
+[*]Features besides imp: [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3493636737]Hotkey of liolok[/url]
 [/list]
 
 [h2]Acknowledgements[/h2]
