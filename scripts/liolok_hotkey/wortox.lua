@@ -34,6 +34,8 @@ end
 --------------------------------------------------------------------------------
 -- wortox_soul | Soul | 灵魂
 
+local _cached_soul_slot -- remember which inventory bar slot to carry Soul
+
 local function GetLeastStackedSoul()
   local inventory = Inv()
   if not inventory then return end
@@ -54,6 +56,7 @@ local function GetLeastStackedSoul()
       total_amount = total_amount + stack_size
     end
   end
+  if type(least_stacked_slot) == 'number' then _cached_soul_slot = least_stacked_slot end
   return least_stacked_soul, least_stacked_slot, total_amount
 end
 
@@ -86,9 +89,13 @@ end
 
 local function ToggleJar(jar) return SendRPCToServer(RPC.UseItemFromInvTile, ACTIONS.RUMMAGE.code, jar) end
 
-local function GetFirstEmptySlot()
+local function GetEmptySlot()
   local inventory = Inv()
   if not inventory then return end
+
+  local cached = _cached_soul_slot
+  if type(cached) == 'number' and not inventory:GetItemInSlot(cached) then return cached end
+
   for slot = 1, inventory:GetNumSlots() do
     if not inventory:GetItemInSlot(slot) then return slot end
   end
@@ -97,7 +104,7 @@ end
 local function TakeSoul(jar_item, soul_slot, soul_num)
   if not jar_item then return end
 
-  local target_slot = soul_slot or GetFirstEmptySlot()
+  local target_slot = soul_slot or GetEmptySlot()
   local is_open = Get(jar_item, 'replica', 'container', '_isopen')
   if not is_open then ToggleJar(jar_item) end -- open jar if not already open
   return ThePlayer:DoTaskInTime(is_open and 0 or 0.4, function() -- wait to ensure jar is open
