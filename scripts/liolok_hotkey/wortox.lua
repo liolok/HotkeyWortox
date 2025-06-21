@@ -35,17 +35,26 @@ end
 -- wortox_soul | Soul | 灵魂
 
 local function GetLeastStackedSoul()
-  local least_stacked_soul
+  local inventory = Inv()
+  if not inventory then return end
+
+  local least_stacked_soul, least_stacked_slot
   local min_stack_size = 1 + (TUNING.STACK_SIZE_SMALLITEM or 40)
-  for _, item in pairs(Get(ThePlayer, 'replica', 'inventory', 'GetItems') or {}) do
+  local total_amount = 0
+  for slot = 1, inventory:GetNumSlots() do -- look through all slots of inventory bar, left to right.
+    local item = inventory:GetItemInSlot(slot)
     local prefab = Get(item, 'prefab')
     local stack_size = Get(item, 'replica', 'stackable', 'StackSize')
-    if prefab == 'wortox_soul' and type(stack_size) == 'number' and stack_size < min_stack_size then
-      min_stack_size = stack_size
-      least_stacked_soul = item
+    if prefab == 'wortox_soul' and type(stack_size) == 'number' then
+      if stack_size < min_stack_size then
+        min_stack_size = stack_size
+        least_stacked_soul = item
+        least_stacked_slot = slot
+      end
+      total_amount = total_amount + stack_size
     end
   end
-  return least_stacked_soul
+  return least_stacked_soul, least_stacked_slot, total_amount
 end
 
 fn.UseSoul = function()
@@ -102,6 +111,23 @@ local function TakeSoul(jar_item, soul_slot, soul_num)
   end)
 end
 
+local function GetJar(demand) -- to find non-full Jar to store Soul, or non-empty Jar to take Soul
+  local inventory = Inv()
+  if not inventory then return end
+
+  local fallback
+  for i = 1, inventory:GetNumSlots() do -- look through all slots of inventory bar, left to right.
+    local item = inventory:GetItemInSlot(i)
+    local prefab = Get(item, 'prefab')
+    local percent = Get(item, 'replica', 'inventoryitem', 'classified', 'percentused', 'value')
+    if prefab == 'wortox_souljar' and type(percent) == 'number' then
+      if (demand == 'non-full' and percent < 100) or (demand == 'non-empty' and percent > 0) then return item end
+      if not fallback then fallback = item end
+    end
+  end
+  return fallback -- return left-most Jar if none meets the demand
+end
+
 local is_jar_in_cd -- cooldown for Soul Jar
 
 fn.UseSoulJar = function()
@@ -117,38 +143,22 @@ fn.UseSoulJar = function()
   local prefab_on_cursor = Get(inv:GetActiveItem(), 'prefab') -- return Soul or Soul Jar on cursor to inventory
   if prefab_on_cursor == 'wortox_soul' or prefab_on_cursor == 'wortox_souljar' then inv:ReturnActiveItem() end
 
-  local jar = { min = { percent = 101 }, max = { percent = -1 }, total = 0 } -- to find emptiest and fullest jar
-  local soul = { min = { stack_size = 1 + (TUNING.STACK_SIZE_SMALLITEM or 40) }, total = 0 } -- to find slot and item with least soul
+  local has_jar, jar_amount = inv:Has('wortox_souljar', 1, false) -- at least one Jar, no need to check all container.
+  if not has_jar then return end -- no Soul Jar at all
 
-  for i = 1, inv:GetNumSlots() do -- look through all slots of inventory bar, left to right.
-    local item = inv:GetItemInSlot(i)
-    local prefab = Get(item, 'prefab')
-    local percent = Get(item, 'replica', 'inventoryitem', 'classified', 'percentused', 'value')
-    local stack_size = Get(item, 'replica', 'stackable', 'StackSize')
-    if prefab == 'wortox_souljar' and type(percent) == 'number' then
-      jar.total = jar.total + 1
-      if percent < jar.min.percent then jar.min = { percent = percent, item = item } end
-      if percent > jar.max.percent then jar.max = { percent = percent, item = item } end
-    end
-    if prefab == 'wortox_soul' and type(stack_size) == 'number' then
-      soul.total = soul.total + stack_size
-      if stack_size < soul.min.stack_size then soul.min = { slot = i, item = item, stack_size = stack_size } end
-    end
-  end
-  if jar.total == 0 then return end -- no jar found
-
-  local max_count = TUNING.WORTOX_MAX_SOULS or 20 -- overload limit
-  local per_count = TUNING.SKILLS.WORTOX.FILLED_SOULJAR_SOULCAP_INCREASE_PER or 5
-  if skill:IsActivated('wortox_souljar_2') then max_count = max_count + per_count * jar.total end
+  local max_souls = TUNING.WORTOX_MAX_SOULS or 20 -- overload limit
+  local increase_per = TUNING.SKILLS.WORTOX.FILLED_SOULJAR_SOULCAP_INCREASE_PER or 5
+  if skill:IsActivated('wortox_souljar_2') then max_souls = max_souls + increase_per * jar_amount end
   local is_greedy = T.GREED and (ThePlayer.wortox_inclination == 'naughty')
-  local target_count = max_count - (is_greedy and 0 or 10)
-  if target_count > 40 then target_count = 40 end
-  if soul.min.item and soul.min.item:HasTag('nosouljar') then soul.total = soul.total - 1 end -- in Soul Echo
-  local n = math.abs(soul.total - target_count) -- number of soul to move
-  dbg('Inventory has %d Soul in total', soul.total)
+  local target = max_souls - (is_greedy and 0 or 10)
+  if target > 40 then target = 40 end
+
+  local soul, slot, count = GetLeastStackedSoul()
+  if soul and soul:HasTag('nosouljar') and count >= 1 then count = count - 1 end -- in Soul Echo so minus one
+  dbg('Inventory has %d Soul in total', count)
+  local n = math.abs(count - target) -- number of soul to move
   inv:ReturnActiveItem() -- if something is on mouse cursor, return it to inventory or it'd block storing/taking actions.
-  return (soul.total > target_count) and StoreSoul(jar.min.item, soul.min.slot, n) -- inventory bar soul too many, try to store some into emptiest jar.
-    or TakeSoul(jar.max.item, soul.min.slot, n) -- inventory bar soul too few, try to take some out of fullest jar.
+  return (count > target) and StoreSoul(GetJar('non-full'), slot, n) or TakeSoul(GetJar('non-empty'), slot, n)
 end
 
 --------------------------------------------------------------------------------
