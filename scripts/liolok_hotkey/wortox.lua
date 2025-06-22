@@ -135,24 +135,28 @@ local function GetJar(demand) -- to find non-full Jar to store Soul, or non-empt
   return fallback -- return left-most Jar if none meets the demand
 end
 
-local is_jar_in_cd -- cooldown for Soul Jar
+local _is_jar_in_cd -- cooldown for Soul Jar
+local function IsJarInCD()
+  if _is_jar_in_cd then return true end
+  _is_jar_in_cd = ThePlayer:DoTaskInTime(0.5, function() _is_jar_in_cd = nil end)
+end
 
 fn.UseSoulJar = function()
-  if ThePlayer:HasTag('busy') then return ThePlayer:DoTaskInTime(FRAMES, fn.UseSoulJar) end
+  if ThePlayer:HasTag('busy') then return ThePlayer:DoTaskInTime(FRAMES, fn.UseSoulJar) end -- delay until not busy
 
-  if is_jar_in_cd then return end
-  is_jar_in_cd = ThePlayer:DoTaskInTime(0.5, function() is_jar_in_cd = nil end)
+  if IsJarInCD() then return end -- wait for cooldown
 
   local skill = Get(ThePlayer, 'components', 'skilltreeupdater')
-  if not (skill and skill:IsActivated('wortox_souljar_1')) then return end -- can not use jar at all
+  if not (skill and skill:IsActivated('wortox_souljar_1')) then return end -- can not use Jar at all
 
   local inv = Inv()
-  local prefab_on_cursor = Get(inv:GetActiveItem(), 'prefab') -- return Soul or Soul Jar on cursor to inventory
-  if prefab_on_cursor == 'wortox_soul' or prefab_on_cursor == 'wortox_souljar' then inv:ReturnActiveItem() end
+  local cursor = Get(inv:GetActiveItem(), 'prefab') -- return Soul or Soul Jar on cursor to inventory
+  if cursor == 'wortox_soul' or cursor == 'wortox_souljar' then inv:ReturnActiveItem() end
 
   local has_jar, jar_amount = inv:Has('wortox_souljar', 1, false) -- at least one Jar, no need to check all container.
   if not has_jar then return end -- no Soul Jar at all
 
+  -- calculate target number of inventory bar Soul
   local max_souls = TUNING.WORTOX_MAX_SOULS or 20 -- overload limit
   local increase_per = TUNING.SKILLS.WORTOX.FILLED_SOULJAR_SOULCAP_INCREASE_PER or 5
   if skill:IsActivated('wortox_souljar_2') then max_souls = max_souls + increase_per * jar_amount end
@@ -180,32 +184,33 @@ end
 local function CanBlink()
   return Get(ThePlayer, 'CanSoulhop') -- has inventory soul and not riding
     and not IsJumping() -- not already jumping
-    and not Inv():GetActiveItem() -- nothing is blocking mouse cursor
+    and (Inv() and not Inv():GetActiveItem()) -- nothing is blocking mouse cursor
     and Get(Inv():GetEquippedItem(EQUIPSLOTS.HANDS), 'prefab') ~= 'orangestaff' -- not equipping The Lazy Explorer
 end
 
 local function IsPassable(x, z) return x and z and TheWorld and TheWorld.Map and TheWorld.Map:IsPassableAtPoint(x, 0, z) end
 
 local function GetPosition(target)
-  if not (ThePlayer and TheInput and CanBlink()) then return end
+  if not CanBlink() then return end
 
-  local player = ThePlayer:GetPosition()
+  local player_x, player_z = Get(ThePlayer, 'GetPosition', 'x'), Get(ThePlayer, 'GetPosition', 'z')
   if target == 'player' then
-    return player.x, player.z
+    return player_x, player_z
   elseif target == 'entity' then
-    local entity = TheInput:GetWorldEntityUnderMouse()
+    local entity = Get(TheInput, 'GetWorldEntityUnderMouse')
     local is_classified = entity and entity:HasTag('CLASSIFIED')
     local x, z = Get(entity, 'GetPosition', 'x'), Get(entity, 'GetPosition', 'z')
     if is_classified == false and IsPassable(x, z) then return x, z end
   elseif target == 'furthest' then
-    local cursor = TheInput:GetWorldPosition()
-    local dx, dz = cursor.x - player.x, cursor.z - player.z
+    local cursor_x, cursor_z = Get(TheInput, 'GetWorldPosition', 'x'), Get(TheInput, 'GetWorldPosition', 'z')
+    if not (player_x and player_z and cursor_x and cursor_z) then return end
+    local dx, dz = cursor_x - player_x, cursor_z - player_z
     local distance = math.sqrt(dx ^ 2 + dz ^ 2) -- distance between player and cursor
     local dist_max = ACTIONS.BLINK.distance or 36
     if distance > dist_max / 9 then -- dead zone
       for dist = dist_max, dist_max / 3, -0.1 do
         local ratio = dist / distance
-        local x, z = player.x + dx * ratio, player.z + dz * ratio
+        local x, z = player_x + dx * ratio, player_z + dz * ratio
         if IsPassable(x, z) then return x, z end
       end
     end
@@ -226,9 +231,9 @@ fn.RefreshBlinkMarkers = function(self) -- inject playercontroller component
   self.OnUpdate = function(self, ...)
     if Get(ThePlayer, 'prefab') ~= 'wortox' then return OldOnUpdate(self, ...) end
 
-    for target, func_name in pairs({ entity = 'BlinkToEntity', furthest = 'BlinkToMostFar' }) do
+    for target, fn_name in pairs({ entity = 'BlinkToEntity', furthest = 'BlinkToMostFar' }) do
       local marker = 'wortox_blink_marker_to_' .. target
-      if Get(T, 'handler', func_name) then -- key binding enabled
+      if Get(T, 'handler', fn_name) then -- key binding enabled
         self[marker] = self[marker] or SpawnPrefab('blink_marker')
         self[marker]:Refresh(GetPosition(target))
       elseif self[marker] then -- key binding disabled in game
