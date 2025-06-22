@@ -1,3 +1,7 @@
+modimport('languages/en') -- load translation strings with English fallback
+local lang = 'languages/' .. GLOBAL.LOC.GetLocaleCode()
+if GLOBAL.kleifileexists(MODROOT .. lang .. '.lua') then modimport(lang) end
+
 TUNING.HOTKEY_WORTOX = {}
 local T = TUNING.HOTKEY_WORTOX
 T.DEBUG = GetModConfigData('debug_mode')

@@ -16,6 +16,7 @@ No need to restart game, [url=https://steamcommunity.com/sharedfiles/filedetails
 [*]Soul Hop to Furthest: Jump to furthest passible position directed by the mouse cursor, where will play portal animation.
 [*]Craft Knabsack
 [*]Craft Twintailed Heart
+[*]Check/Announce Land Explored Percent
 [/list]
 
 [h2]Recommendations[/h2]

@@ -1,7 +1,14 @@
 local fn = {}
 local T = TUNING.HOTKEY_WORTOX or {}
+local S = STRINGS.HOTKEY_WORTOX or {}
 
 local function dbg(...) return T.DEBUG and print('Hotkey for Wortox: ' .. string.format(...)) end
+
+local is_in_cd = {} -- cooldown | 冷却
+local function IsInCD(key, cooldown)
+  if is_in_cd[key] then return true end
+  is_in_cd[key] = ThePlayer and ThePlayer:DoTaskInTime(cooldown or 1, function() is_in_cd[key] = false end)
+end
 
 -- shortcut for code like `ThePlayer and ThePlayer.replica and ThePlayer.replica.inventory`
 local function Get(head_node, ...)
@@ -135,16 +142,10 @@ local function GetJar(demand) -- to find non-full Jar to store Soul, or non-empt
   return fallback -- return left-most Jar if none meets the demand
 end
 
-local _is_jar_in_cd -- cooldown for Soul Jar
-local function IsJarInCD()
-  if _is_jar_in_cd then return true end
-  _is_jar_in_cd = ThePlayer:DoTaskInTime(0.5, function() _is_jar_in_cd = nil end)
-end
-
 fn.UseSoulJar = function()
   if ThePlayer:HasTag('busy') then return ThePlayer:DoTaskInTime(FRAMES, fn.UseSoulJar) end -- delay until not busy
 
-  if IsJarInCD() then return end -- wait for cooldown
+  if IsInCD('Soul Jar', 0.5) then return end -- wait for cooldown
 
   local skill = Get(ThePlayer, 'components', 'skilltreeupdater')
   if not (skill and skill:IsActivated('wortox_souljar_1')) then return end -- can not use Jar at all
@@ -253,6 +254,31 @@ local function Make(prefab) return SendRPCToServer(RPC.MakeRecipeFromMenu, Get(A
 
 fn.MakeNabBag = function() return Make('wortox_nabbag') end -- Knabsack | 强抢袋
 fn.MakeReviver = function() return Make('wortox_reviver') end -- Twintailed Heart | 双尾心
+
+--------------------------------------------------------------------------------
+-- Other | 其它
+
+local function Tip(message)
+  local talker, time, no_anim, force = Get(ThePlayer, 'components', 'talker'), nil, true, true
+  return talker and talker:Say(message, time, no_anim, force)
+end
+
+local function GetLandPercentMessage(params)
+  local percent = Get(ThePlayer, 'GetSeeableTilePercent')
+  if type(percent) ~= 'number' then return end
+
+  local world = (TheWorld and TheWorld:HasTag('cave')) and S.CAVE_WORLD or S.FOREST_WORLD
+  return world .. S.MY_EXPLORED_PERCENT .. string.format('%.2f%%', percent * 100)
+end
+
+fn.TipLandPercent = function() return Tip(GetLandPercentMessage() .. '\n' .. S.HOW_TO_ANNOUNCE) end
+
+AddUserCommand('announce_land_percent', {
+  aliases = { 'alp' },
+  slash = true,
+  params = {},
+  localfn = function() return TheNet and TheNet:Say(S.MOD_NAME .. GetLandPercentMessage()) end,
+})
 
 --------------------------------------------------------------------------------
 

@@ -124,3 +124,10 @@ Switch(
 Header('Quick Craft', '快速制作')
 Hotkey('MakeNabBag', T('Craft Knabsack', '制作强抢袋'))
 Hotkey('MakeReviver', T('Craft Twintailed Heart', '制作双尾心'))
+
+Header('Other', '其它')
+Hotkey(
+  'TipLandPercent',
+  T('Check Land Explored Percent', '查看陆地探索百分比'),
+  T('Could also input /alp to announce to the team', '也可以输入 /alp 宣告给队友')
+)
