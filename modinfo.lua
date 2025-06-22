@@ -2,7 +2,7 @@ local function T(en, zh, zht) return ChooseTranslationTable({ en, zh = zh, zht =
 
 name = T('Hotkey for Wortox', '热键：沃拓克斯')
 author = T('liolok', '李皓奇')
-local date = '2025-06-21'
+local date = '2025-06-22'
 version = date .. '' -- for revision in same day
 description = T(
   [[󰀏 Tip:
