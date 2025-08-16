@@ -147,10 +147,9 @@ fn.UseSoulJar = function()
 
   if IsInCD('Soul Jar', 0.5) then return end -- wait for cooldown
 
-  local skill = Get(ThePlayer, 'components', 'skilltreeupdater')
-  if not (skill and skill:IsActivated('wortox_souljar_1')) then return end -- can not use Jar at all
+  local inv, skill = Inv(), Get(ThePlayer, 'components', 'skilltreeupdater')
+  if not (inv and skill and skill:IsActivated('wortox_souljar_1')) then return end -- can not use Jar at all
 
-  local inv = Inv()
   local cursor = Get(inv:GetActiveItem(), 'prefab') -- return Soul or Soul Jar on cursor to inventory
   if cursor == 'wortox_soul' or cursor == 'wortox_souljar' then inv:ReturnActiveItem() end
 
@@ -263,7 +262,7 @@ local function Tip(message)
   return talker and talker:Say(message, time, no_anim, force)
 end
 
-local function GetLandPercentMessage(params)
+local function GetLandPercentMessage()
   local percent = Get(ThePlayer, 'GetSeeableTilePercent')
   if type(percent) ~= 'number' then return end
 

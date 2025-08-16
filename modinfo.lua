@@ -51,20 +51,22 @@ end
 configuration_options = {}
 
 local function Config(conf_type, name, label, hover)
-  local options, default = { { description = '', data = 0 } }, 0 -- header
+  local options, default
   if conf_type == 'hotkey' then
     options, default = keys, 'KEY_DISABLED'
   elseif conf_type == 'boolean' then
     options = { { data = false, description = T('Off', '关闭') }, { data = true, description = T('On', '开启') } }
     default = false
+  elseif conf_type == 'header' then
+    options, default = { { description = '', data = 0 } }, 0
   end
   configuration_options[#configuration_options + 1] =
     { name = name, label = label, hover = hover, options = options, default = default }
 end
 
+local function Hotkey(...) return Config('hotkey', ...) end
 local function Switch(...) return Config('boolean', ...) end
 local function Header(...) return Config('header', T(...)) end
-local function Hotkey(...) return Config('hotkey', ...) end
 
 Switch('debug_mode', T('Debug Mode', '调试模式'), T('Print log in console.', '在控制台打印日志'))
 
