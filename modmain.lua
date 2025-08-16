@@ -17,6 +17,8 @@ local FN = require('liolok_hotkey/wortox')
 PrefabFiles = { 'blink_marker' } -- Soul Hop target position display | 灵魂跳跃目标位置显示
 AddComponentPostInit('playercontroller', FN.RefreshBlinkMarkers)
 
+AddClassPostConstruct('widgets/controls', function(self) T.CONTROLS = self end) -- to check CPMAPanel shown or not
+
 function KeyBind(name, key)
   -- disable old binding
   if T.handler[name] then T.handler[name]:Remove() end

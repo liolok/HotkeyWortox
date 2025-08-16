@@ -186,6 +186,8 @@ local function CanBlink()
     and not IsJumping() -- not already jumping
     and (Inv() and not Inv():GetActiveItem()) -- nothing is blocking mouse cursor
     and Get(Inv():GetEquippedItem(EQUIPSLOTS.HANDS), 'prefab') ~= 'orangestaff' -- not equipping The Lazy Explorer
+    and not Get(T, 'CONTROLS', 'CPMAPanel', 'IsShow') -- 圆形摆放：https://steamcommunity.com/sharedfiles/filedetails/?id=2914336761
+    and not (type(rawget(_G, 'IsBSPJPlayHelperReady')) == 'function' and _G.IsBSPJPlayHelperReady()) -- 基地投影：https://steamcommunity.com/sharedfiles/filedetails/?id=2928652892
 end
 
 local function IsPassable(x, z) return x and z and TheWorld and TheWorld.Map and TheWorld.Map:IsPassableAtPoint(x, 0, z) end
