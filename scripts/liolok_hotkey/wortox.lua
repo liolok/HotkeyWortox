@@ -82,21 +82,38 @@ end
 
 local function ToggleJar(jar) return SendRPCToServer(RPC.UseItemFromInvTile, ACTIONS.RUMMAGE.code, jar) end
 
-local function GetJar(demand) -- to find non-full Jar to store Soul, or non-empty Jar to take Soul
+local function GetRightMostNonFullJar() -- to find right-most non-full Jar to store Soul
   local inventory = Inv()
   if not inventory then return end
 
-  local fallback
+  local left_most_jar
+  for i = inventory:GetNumSlots(), 1, -1 do -- look through all slots of inventory bar, right to right.
+    local item = inventory:GetItemInSlot(i)
+    local prefab = Get(item, 'prefab')
+    local percent = Get(item, 'replica', 'inventoryitem', 'classified', 'percentused', 'value')
+    if prefab == 'wortox_souljar' and type(percent) == 'number' then
+      if percent < 100 then return item end
+      left_most_jar = item
+    end
+  end
+  return left_most_jar -- return left-most Jar if all Jars are full
+end
+
+local function GetLeftMostNonEmptyJar() -- to find left-most non-empty Jar to take Soul
+  local inventory = Inv()
+  if not inventory then return end
+
+  local right_most_jar
   for i = 1, inventory:GetNumSlots() do -- look through all slots of inventory bar, left to right.
     local item = inventory:GetItemInSlot(i)
     local prefab = Get(item, 'prefab')
     local percent = Get(item, 'replica', 'inventoryitem', 'classified', 'percentused', 'value')
     if prefab == 'wortox_souljar' and type(percent) == 'number' then
-      if (demand == 'non-full' and percent < 100) or (demand == 'non-empty' and percent > 0) then return item end
-      if not fallback then fallback = item end
+      if percent > 0 then return item end
+      right_most_jar = item
     end
   end
-  return fallback -- return left-most Jar if none meets the demand
+  return right_most_jar -- return right-most Jar if all Jars are empty
 end
 
 fn.UseSoulJar = function()
@@ -127,7 +144,7 @@ fn.UseSoulJar = function()
   if soul and soul:HasTag('nosouljar') and count >= 1 then count = count - 1 end -- in Soul Echo so minus one
   dbg('Inventory bar has %d Soul in total', count)
   local is_storing = count > target
-  local jar = GetJar(is_storing and 'non-full' or 'non-empty')
+  local jar = is_storing and GetRightMostNonFullJar() or GetLeftMostNonEmptyJar()
   local is_jar_open = Get(jar, 'replica', 'container', '_isopen')
   if not is_jar_open then ToggleJar(jar) end -- open jar if not already open
   return ThePlayer:DoTaskInTime(is_jar_open and 0 or 0.4, function() -- wait to ensure jar is open
