@@ -41,8 +41,6 @@ end
 --------------------------------------------------------------------------------
 -- wortox_soul | Soul | 灵魂
 
-local _cached_soul_slot -- remember which inventory bar slot to carry Soul
-
 local function GetLeastStackedSoul()
   local inventory = Inv()
   if not inventory then return end
@@ -63,7 +61,6 @@ local function GetLeastStackedSoul()
       total_amount = total_amount + stack_size
     end
   end
-  if type(least_stacked_slot) == 'number' then _cached_soul_slot = least_stacked_slot end
   return least_stacked_soul, least_stacked_slot, total_amount
 end
 
@@ -83,47 +80,7 @@ end
 -- wortox_souljar | Soul Jar | 灵魂罐
 -- credit: workshop-3379520334 of liang
 
-local function StoreSoul(jar_item, soul_slot, soul_num)
-  if not (jar_item and soul_slot and soul_num) then return end
-
-  dbg('Store %d Soul from slot %d', soul_num, soul_slot)
-  SendRPCToServer(RPC.TakeActiveItemFromCountOfSlot, soul_slot, nil, soul_num) -- take souls from slot
-  SendRPCToServer(RPC.UseItemFromInvTile, ACTIONS.STORE.code, jar_item) -- store as many souls into jar
-  return ThePlayer:DoTaskInTime(0.4, function() -- put soul back into inventory bar slot
-    return SendRPCToServer(RPC.AddAllOfActiveItemToSlot, soul_slot)
-  end)
-end
-
 local function ToggleJar(jar) return SendRPCToServer(RPC.UseItemFromInvTile, ACTIONS.RUMMAGE.code, jar) end
-
-local function GetEmptySlot()
-  local inventory = Inv()
-  if not inventory then return end
-
-  local cached = _cached_soul_slot
-  if type(cached) == 'number' and not inventory:GetItemInSlot(cached) then return cached end
-
-  for slot = 1, inventory:GetNumSlots() do
-    if not inventory:GetItemInSlot(slot) then return slot end
-  end
-end
-
-local function TakeSoul(jar_item, soul_slot, soul_num)
-  if not jar_item then return end
-
-  local target_slot = soul_slot or GetEmptySlot()
-  local is_open = Get(jar_item, 'replica', 'container', '_isopen')
-  if not is_open then ToggleJar(jar_item) end -- open jar if not already open
-  return ThePlayer:DoTaskInTime(is_open and 0 or 0.4, function() -- wait to ensure jar is open
-    if target_slot and soul_num > 0 then
-      dbg('Take %d Soul to slot %d', soul_num, target_slot)
-      SendRPCToServer(RPC.TakeActiveItemFromCountOfSlot, 1, jar_item, soul_num) -- take souls from jar
-      local rpc = soul_slot and RPC.AddAllOfActiveItemToSlot or RPC.PutAllOfActiveItemInSlot
-      SendRPCToServer(rpc, target_slot) -- put soul into inventory bar slot
-    end
-    return ToggleJar(jar_item) -- close jar
-  end)
-end
 
 local function GetJar(demand) -- to find non-full Jar to store Soul, or non-empty Jar to take Soul
   local inventory = Inv()
@@ -156,6 +113,8 @@ fn.UseSoulJar = function()
   local has_jar, jar_amount = inv:Has('wortox_souljar', 1, false) -- at least one Jar, no need to check all container.
   if not has_jar then return end -- no Soul Jar at all
 
+  inv:ReturnActiveItem() -- if something is on mouse cursor, return it to inventory or it'd block storing/taking actions.
+
   -- calculate target number of inventory bar Soul
   local max_souls = TUNING.WORTOX_MAX_SOULS or 20 -- overload limit
   local increase_per = TUNING.SKILLS.WORTOX.FILLED_SOULJAR_SOULCAP_INCREASE_PER or 5
@@ -166,10 +125,30 @@ fn.UseSoulJar = function()
 
   local soul, slot, count = GetLeastStackedSoul()
   if soul and soul:HasTag('nosouljar') and count >= 1 then count = count - 1 end -- in Soul Echo so minus one
-  dbg('Inventory has %d Soul in total', count)
-  local n = math.abs(count - target) -- number of soul to move
-  inv:ReturnActiveItem() -- if something is on mouse cursor, return it to inventory or it'd block storing/taking actions.
-  return (count > target) and StoreSoul(GetJar('non-full'), slot, n) or TakeSoul(GetJar('non-empty'), slot, n)
+  dbg('Inventory bar has %d Soul in total', count)
+  local is_storing = count > target
+  local jar = GetJar(is_storing and 'non-full' or 'non-empty')
+  local is_jar_open = Get(jar, 'replica', 'container', '_isopen')
+  if not is_jar_open then ToggleJar(jar) end -- open jar if not already open
+  return ThePlayer:DoTaskInTime(is_jar_open and 0 or 0.4, function() -- wait to ensure jar is open
+    local n = math.abs(count - target) -- number of Soul to move
+    if n == 0 then return ToggleJar(jar) end -- no need to move Soul, skip to close Jar
+
+    if is_storing then
+      local soul_in_jar = Get(jar, 'replica', 'container'):GetItemInSlot(1)
+      local soul_count_in_jar = Get(soul_in_jar, 'replica', 'stackable', 'StackSize') or 0
+      local available_storage = (TUNING.STACK_SIZE_SMALLITEM or 40) - soul_count_in_jar
+      local num = math.min(n, available_storage)
+      dbg('Moving %d Soul from slot %d of inventory bar into Soul Jar', num, slot)
+      local source_slot, destination_container = slot, jar
+      SendRPCToServer(RPC.MoveInvItemFromCountOfSlot, source_slot, destination_container, num)
+    else
+      dbg('Moving %d Soul out of Soul Jar to inventory bar', n)
+      local source_slot, source_container, destination_container = 1, jar, ThePlayer
+      SendRPCToServer(RPC.MoveItemFromCountOfSlot, source_slot, source_container, destination_container, n)
+    end
+    return ToggleJar(jar) -- close Jar
+  end)
 end
 
 --------------------------------------------------------------------------------
