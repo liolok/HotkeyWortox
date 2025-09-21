@@ -177,12 +177,18 @@ local function IsJumping()
   return as and (as:IsCurrentAnimation('wortox_portal_jumpin') or as:IsCurrentAnimation('wortox_portal_jumpout'))
 end
 
+local IS_EQUIP_BLOCKING_BLINK = {
+  opalstaff = true,
+  orangestaff = true,
+  yellowstaff = true,
+}
+
 local function CanBlink()
   return Get(ThePlayer, 'CanSoulhop') -- has inventory soul and not riding
     and not IsJumping() -- not already jumping
     and (Inv() and not Inv():GetActiveItem()) -- nothing is blocking mouse cursor
     and not TheInput:GetHUDEntityUnderMouse() -- cursor not hovering HUD like clock or inventory bar
-    and Get(Inv():GetEquippedItem(EQUIPSLOTS.HANDS), 'prefab') ~= 'orangestaff' -- not equipping The Lazy Explorer
+    and not IS_EQUIP_BLOCKING_BLINK[Get(Inv():GetEquippedItem(EQUIPSLOTS.HANDS), 'prefab')] -- hand equipment not blocking blink
     and not Get(T, 'CONTROLS', 'CPMAPanel', 'IsShow') -- 圆形摆放：https://steamcommunity.com/sharedfiles/filedetails/?id=2914336761
     and not (type(rawget(_G, 'IsBSPJPlayHelperReady')) == 'function' and _G.IsBSPJPlayHelperReady()) -- 基地投影：https://steamcommunity.com/sharedfiles/filedetails/?id=2928652892
 end
