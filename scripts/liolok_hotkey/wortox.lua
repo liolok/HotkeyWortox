@@ -187,7 +187,13 @@ local function CanBlink()
     and not (type(rawget(_G, 'IsBSPJPlayHelperReady')) == 'function' and _G.IsBSPJPlayHelperReady()) -- 基地投影：https://steamcommunity.com/sharedfiles/filedetails/?id=2928652892
 end
 
-local function IsPassable(x, z) return x and z and TheWorld and TheWorld.Map and TheWorld.Map:IsPassableAtPoint(x, 0, z) end
+local function CanBlinkTo(x, z)
+  local map = Get(TheWorld, 'Map')
+  if not (map and map:IsPassableAtPoint(x, 0, z)) then return end
+
+  local from, to = Get(ThePlayer, 'GetPosition') or Vector3(0, 0, 0), Vector3(x, 0, z)
+  return IsTeleportingPermittedFromPointToPoint(from.x, from.y, from.z, to.x, to.y, to.z)
+end
 
 local function GetPosition(target)
   if not CanBlink() then return end
@@ -199,7 +205,7 @@ local function GetPosition(target)
     local entity = Get(TheInput, 'GetWorldEntityUnderMouse')
     local is_classified = entity and entity:HasTag('CLASSIFIED')
     local x, z = Get(entity, 'GetPosition', 'x'), Get(entity, 'GetPosition', 'z')
-    if is_classified == false and IsPassable(x, z) then return x, z end
+    if is_classified == false and CanBlinkTo(x, z) then return x, z end
   elseif target == 'furthest' then
     local cursor_x, cursor_z = Get(TheInput, 'GetWorldPosition', 'x'), Get(TheInput, 'GetWorldPosition', 'z')
     if not (player_x and player_z and cursor_x and cursor_z) then return end
@@ -210,7 +216,7 @@ local function GetPosition(target)
       for dist = dist_max, dist_max / 3, -0.1 do
         local ratio = dist / distance
         local x, z = player_x + dx * ratio, player_z + dz * ratio
-        if IsPassable(x, z) then return x, z end
+        if CanBlinkTo(x, z) then return x, z end
       end
     end
   end
@@ -227,7 +233,7 @@ fn.BlinkToMostFar = function() return BlinkTo('furthest') end
 
 fn.RefreshBlinkMarkers = function(self) -- inject playercontroller component
   local OldOnUpdate = self.OnUpdate
-  self.OnUpdate = function(self, ...)
+  function self:OnUpdate(...)
     if Get(ThePlayer, 'prefab') ~= 'wortox' then return OldOnUpdate(self, ...) end
 
     for target, fn_name in pairs({ entity = 'BlinkToEntity', furthest = 'BlinkToMostFar' }) do
