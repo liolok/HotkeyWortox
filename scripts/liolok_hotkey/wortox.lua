@@ -67,13 +67,30 @@ end
 fn.UseSoul = function()
   dbg('Eating Soul')
   local soul = GetLeastStackedSoul()
-  return soul and Ctl():RemoteUseItemFromInvTile(BufferedAction(ThePlayer, nil, ACTIONS.EAT, soul), soul)
+  if soul then
+    if Get(TheWorld, 'ismastersim') then -- local forest-only world
+      local inventory = Inv()
+      return inventory and inventory:UseItemFromInvTile(soul)
+    else
+      local controller = Ctl()
+      local buffered_action = BufferedAction(ThePlayer, nil, ACTIONS.EAT, soul)
+      return controller and controller:RemoteUseItemFromInvTile(buffered_action, soul)
+    end
+  end
 end
 
 fn.DropSoul = function()
   dbg('Dropping Soul')
   local soul = GetLeastStackedSoul()
-  return soul and Ctl():RemoteDropItemFromInvTile(soul)
+  if soul then
+    if Get(TheWorld, 'ismastersim') then -- local forest-only world
+      local inventory = Inv()
+      return inventory and inventory:DropItemFromInvTile(soul)
+    else
+      local controller = Ctl()
+      return controller and controller:RemoteDropItemFromInvTile(soul)
+    end
+  end
 end
 
 --------------------------------------------------------------------------------
